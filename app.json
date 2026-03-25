@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "temp",
-    "slug": "temp",
+    "name": "whats-cooking",
+    "slug": "whats-cooking",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "temp",
+    "scheme": "whats-cooking",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

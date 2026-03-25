@@ -4,10 +4,9 @@ import { View, Text, StyleSheet } from 'react-native';
 export default function Home() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Goal Setup</Text>
+      <Text style={styles.title}>Home Page</Text>
       <Text style={styles.subtitle}>
-        You have successfully logged in.{"\n"}
-        This is where users will set their daily calorie goals.
+        [Placeholder for Home Page / Ingredients Input]
       </Text>
     </View>
   );
