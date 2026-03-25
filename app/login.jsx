@@ -1,0 +1,182 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ChefHat, Utensils } from 'lucide-react-native';
+
+export default function Login() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = () => {
+    setError('');
+    // Mock authentication check
+    if (email === 'test@example.com' && password === 'password123') {
+      router.push('/home');
+    } else {
+      setError('Incorrect email/password');
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.logoSection}>
+        <View style={styles.logoCircle}>
+          <ChefHat size={40} color="#4a2916" strokeWidth={2} style={styles.chefIcon} />
+          <Text style={styles.logoText}>What's</Text>
+          <Text style={styles.logoText}>Cooking</Text>
+          <Utensils size={24} color="#4a2916" style={styles.utensilsIcon} />
+        </View>
+      </View>
+
+      <View style={styles.formContainer}>
+        {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+        
+        <TextInput
+          style={styles.input}
+          placeholder="EMAIL"
+          placeholderTextColor="#6d4b2e"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="PASSWORD"
+          placeholderTextColor="#6d4b2e"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        
+        <TouchableOpacity style={styles.createAccountBtn} onPress={handleLogin} activeOpacity={0.8}>
+          <Text style={styles.btnText}>Sign In</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.switchAuthMode}>
+        <Text style={styles.switchText}>Don't have an account?</Text>
+        <TouchableOpacity onPress={() => router.push('/signup')}>
+          <Text style={styles.linkBtn}>Create an Account</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+// Export styles so we can reuse them safely in signup.jsx
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f6c88f',
+    alignItems: 'center',
+    paddingTop: 80,
+    paddingHorizontal: 24,
+  },
+  logoSection: {
+    marginBottom: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoCircle: {
+    backgroundColor: '#ffe654',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  chefIcon: {
+    marginBottom: -4,
+  },
+  logoText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#4a2916',
+    textAlign: 'center',
+  },
+  utensilsIcon: {
+    marginTop: 4,
+  },
+  formContainer: {
+    width: '100%',
+    maxWidth: 340,
+    gap: 20,
+  },
+  input: {
+    width: '100%',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    color: '#3b2a47',
+    backgroundColor: '#df9e42',
+    borderColor: '#433a5b',
+    borderWidth: 1,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  createAccountBtn: {
+    marginTop: 10,
+    width: '100%',
+    paddingVertical: 18,
+    backgroundColor: '#e08b1a',
+    borderColor: '#433a5b',
+    borderWidth: 1,
+    borderRadius: 50,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  btnText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    color: '#bf2424',
+    backgroundColor: '#ffd8d8',
+    borderColor: '#eba5a5',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: -10,
+    marginBottom: 0,
+    overflow: 'hidden',
+  },
+  switchAuthMode: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
+  switchText: {
+    color: '#3b2a47',
+    fontSize: 15,
+    marginBottom: 8,
+  },
+  linkBtn: {
+    color: '#b54f02',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+});
