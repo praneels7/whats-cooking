@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChefHat, Utensils } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from './login';
 
 export default function Signup() {
@@ -10,9 +11,20 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleCreateAccount = () => {
-    // Simulate successful signup
-    router.push('/home');
+  const handleCreateAccount = async () => {
+    if (!username || !email || !password) {
+      Alert.alert('Missing Fields', 'Please fill in all fields to create an account.');
+      return;
+    }
+    
+    try {
+      const accountData = JSON.stringify({ username, email, password });
+      // Persist the mock account info locally
+      await AsyncStorage.setItem('mockUserAccount', accountData);
+      router.push('/home');
+    } catch (e) {
+      console.error('Failed to save account', e);
+    }
   };
 
   return (

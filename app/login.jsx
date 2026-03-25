@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChefHat, Utensils } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
   const router = useRouter();
@@ -9,13 +10,28 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('');
-    // Mock authentication check
-    if (email === 'test@example.com' && password === 'password123') {
-      router.push('/home');
-    } else {
-      setError('Incorrect email/password');
+    
+    try {
+      // 1. Check if the user has an AsyncStorage account they created
+      const storedAccount = await AsyncStorage.getItem('mockUserAccount');
+      if (storedAccount !== null) {
+        const account = JSON.parse(storedAccount);
+        if (email.trim().toLowerCase() === account.email.trim().toLowerCase() && password === account.password) {
+          router.push('/home');
+          return;
+        }
+      }
+
+      // 2. Fall back to hardcoded mock
+      if (email.trim().toLowerCase() === 'test@example.com' && password === 'password123') {
+        router.push('/home');
+      } else {
+        setError('Incorrect email/password');
+      }
+    } catch (e) {
+      setError('Login error. Please try again.');
     }
   };
 
