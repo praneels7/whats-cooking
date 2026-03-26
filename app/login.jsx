@@ -19,14 +19,14 @@ export default function Login() {
       if (storedAccount !== null) {
         const account = JSON.parse(storedAccount);
         if (email.trim().toLowerCase() === account.email.trim().toLowerCase() && password === account.password) {
-          router.push('/home');
+          router.replace('/dashboard');
           return;
         }
       }
 
       // 2. Fall back to hardcoded mock
       if (email.trim().toLowerCase() === 'test@example.com' && password === 'password123') {
-        router.push('/home');
+        router.replace('/dashboard');
       } else {
         setError('Incorrect email/password');
       }
@@ -90,7 +90,7 @@ export default function Login() {
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6c88f',
+    backgroundColor: '#F5C87A',
     alignItems: 'center',
     paddingTop: 80,
     paddingHorizontal: 24,
@@ -107,7 +107,7 @@ export const styles = StyleSheet.create({
     borderRadius: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -136,11 +136,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     fontSize: 16,
     color: '#3b2a47',
-    backgroundColor: '#df9e42',
+    backgroundColor: '#E8930A',
     borderColor: '#433a5b',
     borderWidth: 1,
     borderRadius: 50,
-    shadowColor: '#000',
+    shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
@@ -155,7 +155,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 5,

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
   Pressable,
@@ -8,22 +9,26 @@ import {
   Text,
   TextInput,
   View,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../constants/colors';
-import { USER } from '../constants/mockData';
+import { colors } from '../src/constants/colors';
+import { USER } from '../src/constants/mockData';
+import { useRouter } from 'expo-router';
 
 const MENU_ITEMS = [
   'Change Fitness Goal',
   'Change Motivation Tone',
   'Change Activity Level',
-  'Manual Goal Adjustment',
+  'Change Height/Weight',
 ];
 
-export default function SettingsScreen({ navigation }) {
+export default function SettingsScreen() {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [notificationsOn, setNotificationsOn] = useState(true);
+  const [displayUsername, setDisplayUsername] = useState(USER.settingsName);
   const [username, setUsername] = useState(USER.editUsername);
   const [email, setEmail] = useState(USER.email);
   const [newPassword, setNewPassword] = useState('');
@@ -31,16 +36,72 @@ export default function SettingsScreen({ navigation }) {
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const data = await AsyncStorage.getItem('mockUserAccount');
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (parsed.username) {
+            setDisplayUsername(parsed.username);
+            setUsername(parsed.username);
+          }
+          if (parsed.email) {
+            setEmail(parsed.email);
+          }
+        }
+      } catch (e) {}
+    }
+    loadUser();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    
+    try {
+      const storedAccount = await AsyncStorage.getItem('mockUserAccount');
+      let accountObj = storedAccount ? JSON.parse(storedAccount) : {};
+      
+      accountObj.username = username;
+      accountObj.email = email;
+      if (newPassword) {
+        accountObj.password = newPassword;
+      }
+      
+      await AsyncStorage.setItem('mockUserAccount', JSON.stringify(accountObj));
+      
+      setDisplayUsername(username);
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      setIsEditing(false);
+      Alert.alert('Saved', 'Your profile has been successfully updated!');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to save changes');
+    }
+  };
+
   const handleBack = () => {
     if (isEditing) {
       setIsEditing(false);
       return;
     }
-    navigation.goBack();
+    router.replace('/dashboard');
   };
 
   const openMenu = (label) => {
-    Alert.alert(label, 'This screen will be available in a future update.');
+    if (label === 'Change Height/Weight') {
+      router.push('/height-weight?fromSettings=true');
+    } else if (label === 'Change Fitness Goal') {
+      router.push('/main-goal?fromSettings=true');
+    } else if (label === 'Change Activity Level') {
+      router.push('/activity-level?fromSettings=true');
+    } else {
+      Alert.alert(label, 'This screen will be available in a future update.');
+    }
   };
 
   return (
@@ -72,7 +133,7 @@ export default function SettingsScreen({ navigation }) {
             </View>
           </View>
           {!isEditing ? (
-            <Text style={styles.profileName}>{USER.settingsName}</Text>
+            <Text style={styles.profileName}>{displayUsername}</Text>
           ) : (
             <Text style={styles.profileNameSmall}>{username}</Text>
           )}
@@ -114,7 +175,7 @@ export default function SettingsScreen({ navigation }) {
                 styles.resetBtn,
                 pressed && styles.resetPressed,
               ]}
-              onPress={() => Alert.alert('Reset Goals', 'Goals reset (mock).')}
+              onPress={() => router.push('/main-goal?fromReset=true')}
             >
               <Text style={styles.resetText}>Reset Goals</Text>
             </Pressable>
@@ -124,7 +185,7 @@ export default function SettingsScreen({ navigation }) {
                 styles.amberBtn,
                 pressed && styles.amberPressed,
               ]}
-              onPress={() => Alert.alert('Logout', 'Logged out (mock).')}
+              onPress={() => router.replace('/login')}
             >
               <Text style={styles.amberBtnText}>Logout</Text>
             </Pressable>
@@ -134,12 +195,31 @@ export default function SettingsScreen({ navigation }) {
                 styles.amberBtn,
                 pressed && styles.amberPressed,
               ]}
-              onPress={() =>
-                Alert.alert(
-                  'Delete Account',
-                  'This would delete your account (mock).',
-                )
-              }
+              onPress={async () => {
+                if (Platform.OS === 'web') {
+                  const confirmDelete = window.confirm('Are you sure you want to permanently delete your account?');
+                  if (confirmDelete) {
+                    await AsyncStorage.removeItem('mockUserAccount');
+                    router.replace('/signup');
+                  }
+                } else {
+                  Alert.alert(
+                    'Delete Account',
+                    'Are you sure you want to permanently delete your account?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { 
+                        text: 'Delete', 
+                        style: 'destructive',
+                        onPress: async () => {
+                          await AsyncStorage.removeItem('mockUserAccount');
+                          router.replace('/signup');
+                        }
+                      }
+                    ]
+                  );
+                }
+              }}
             >
               <Text style={styles.amberBtnText}>Delete Account</Text>
             </Pressable>
@@ -215,10 +295,7 @@ export default function SettingsScreen({ navigation }) {
                 pressed && styles.amberPressed,
                 { marginTop: 8 },
               ]}
-              onPress={() => {
-                setIsEditing(false);
-                Alert.alert('Saved', 'Profile updated (mock).');
-              }}
+              onPress={handleSaveProfile}
             >
               <Text style={styles.amberBtnText}>Save Changes</Text>
             </Pressable>

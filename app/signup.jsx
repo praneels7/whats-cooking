@@ -21,7 +21,7 @@ export default function Signup() {
       const accountData = JSON.stringify({ username, email, password });
       // Persist the mock account info locally
       await AsyncStorage.setItem('mockUserAccount', accountData);
-      router.push('/home');
+      router.push('/setup-plan');
     } catch (e) {
       console.error('Failed to save account', e);
     }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Alert,
   Image,
@@ -11,16 +11,18 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import MacroBar from '../components/MacroBar';
-import FoodLogItem from '../components/FoodLogItem';
-import { colors } from '../constants/colors';
+import MacroBar from '../src/components/MacroBar';
+import FoodLogItem from '../src/components/FoodLogItem';
+import { colors } from '../src/constants/colors';
 import {
   CALORIE_STATS,
   FOOD_LOG,
   MACRO_STATS,
   USER,
   getDateStrip,
-} from '../constants/mockData';
+} from '../src/constants/mockData';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RING_SIZE = 118;
 const RING_STROKE = 10;
@@ -63,7 +65,24 @@ function CalorieRing({ progress }) {
   );
 }
 
-export default function DashboardScreen({ navigation }) {
+export default function DashboardScreen() {
+  const router = useRouter();
+  const [userName, setUserName] = useState(USER.name);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const data = await AsyncStorage.getItem('mockUserAccount');
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (parsed.username) {
+            setUserName(parsed.username);
+          }
+        }
+      } catch (e) {}
+    }
+    loadUser();
+  }, []);
   const insets = useSafeAreaInsets();
   const dateStrip = useMemo(() => getDateStrip(), []);
   const todayId = useMemo(() => {
@@ -86,11 +105,11 @@ export default function DashboardScreen({ navigation }) {
         <View style={styles.topRow}>
           <Image source={{ uri: USER.avatarUrl }} style={styles.avatar} />
           <View style={styles.greetingCol}>
-            <Text style={styles.greetingTitle}>{USER.greetingName}</Text>
+            <Text style={styles.greetingTitle}>Hi, {userName}</Text>
             <Text style={styles.greetingSub}>Ready to conquer today?</Text>
           </View>
           <Pressable
-            onPress={() => navigation.navigate('Notifications')}
+            onPress={() => router.push('/notifications')}
             hitSlop={10}
             style={styles.bellWrap}
           >
@@ -200,7 +219,7 @@ export default function DashboardScreen({ navigation }) {
             <Ionicons name="scan-outline" size={28} color={colors.accent} />
           </Pressable>
           <Pressable
-            onPress={() => navigation.navigate('Settings')}
+            onPress={() => router.push('/settings')}
             style={styles.navItem}
           >
             <Ionicons name="settings-outline" size={26} color={colors.accent} />
@@ -303,7 +322,7 @@ const styles = StyleSheet.create({
     borderRadius: colors.radiusLg,
     padding: 18,
     marginBottom: 14,
-    shadowColor: '#000',
+    shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -317,6 +336,7 @@ const styles = StyleSheet.create({
   },
   calStat: {
     flex: 1,
+    alignItems: 'center',
   },
   calValue: {
     color: colors.white,
@@ -339,7 +359,7 @@ const styles = StyleSheet.create({
     borderRadius: colors.radiusLg,
     padding: 16,
     marginBottom: 22,
-    shadowColor: '#000',
+    shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -393,7 +413,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     marginHorizontal: 24,
     minWidth: 280,
-    shadowColor: '#000',
+    shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,

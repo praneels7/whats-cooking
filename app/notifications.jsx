@@ -1,16 +1,18 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import NotificationCard from '../components/NotificationCard';
-import { colors } from '../constants/colors';
-import { NOTIFICATIONS } from '../constants/mockData';
+import NotificationCard from '../src/components/NotificationCard';
+import { colors } from '../src/constants/colors';
+import { NOTIFICATIONS } from '../src/constants/mockData';
+import { useRouter } from 'expo-router';
 
-export default function NotificationsScreen({ navigation }) {
+export default function NotificationsScreen() {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Pressable
-          onPress={() => navigation.goBack()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/dashboard')}
           hitSlop={12}
           style={styles.backBtn}
         >

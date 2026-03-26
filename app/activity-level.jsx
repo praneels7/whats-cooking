@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -8,13 +8,38 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import OptionCard from '../components/OptionCard';
-import { colors } from '../constants/colors';
-import { ACTIVITY_OPTIONS } from '../constants/mockData';
+import OptionCard from '../src/components/OptionCard';
+import { colors } from '../src/constants/colors';
+import { ACTIVITY_OPTIONS } from '../src/constants/mockData';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function ActivityLevelScreen({ navigation }) {
+export default function ActivityLevelScreen() {
+  const router = useRouter();
+  const { fromSettings, fromReset } = useLocalSearchParams();
+  const isEditing = fromSettings === 'true';
+  const isResetting = fromReset === 'true';
   const [selectedId, setSelectedId] = useState('rarely');
-  const showBack = navigation.canGoBack();
+  const showBack = router.canGoBack();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const existing = await AsyncStorage.getItem('mockUserAccount');
+        if (existing) {
+          const account = JSON.parse(existing);
+          if (account.activityLevel) {
+            setSelectedId(account.activityLevel);
+          }
+        }
+      } catch(e) {}
+      setIsLoaded(true);
+    }
+    loadData();
+  }, []);
+
+  if (!isLoaded) return null;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -25,7 +50,7 @@ export default function ActivityLevelScreen({ navigation }) {
         <View style={styles.header}>
           {showBack ? (
             <Pressable
-              onPress={() => navigation.goBack()}
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/main-goal')}
               hitSlop={12}
               style={styles.backBtn}
             >
@@ -55,9 +80,20 @@ export default function ActivityLevelScreen({ navigation }) {
       <View style={styles.footer}>
         <Pressable
           style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-          onPress={() => navigation.navigate('Struggles')}
+          onPress={async () => {
+             try {
+               const existing = await AsyncStorage.getItem('mockUserAccount');
+               const account = existing ? JSON.parse(existing) : {};
+               account.activityLevel = selectedId;
+               await AsyncStorage.setItem('mockUserAccount', JSON.stringify(account));
+             } catch (e) {}
+
+             if (isEditing) { router.canGoBack() ? router.back() : router.replace('/settings'); }
+             else if (isResetting) router.push('/struggles?fromReset=true');
+             else router.push('/struggles');
+          }}
         >
-          <Text style={styles.ctaText}>Next</Text>
+          <Text style={styles.ctaText}>{isEditing ? 'Done' : 'Next'}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

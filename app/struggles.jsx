@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -8,12 +8,36 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import OptionCard from '../components/OptionCard';
-import { colors } from '../constants/colors';
-import { STRUGGLE_OPTIONS } from '../constants/mockData';
+import OptionCard from '../src/components/OptionCard';
+import { colors } from '../src/constants/colors';
+import { STRUGGLE_OPTIONS } from '../src/constants/mockData';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function StrugglesScreen({ navigation }) {
+export default function StrugglesScreen() {
+  const router = useRouter();
+  const { fromReset } = useLocalSearchParams();
+  const isResetting = fromReset === 'true';
   const [selectedId, setSelectedId] = useState('cravings');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const existing = await AsyncStorage.getItem('mockUserAccount');
+        if (existing) {
+          const account = JSON.parse(existing);
+          if (account.struggles) {
+            setSelectedId(account.struggles);
+          }
+        }
+      } catch(e) {}
+      setIsLoaded(true);
+    }
+    loadData();
+  }, []);
+
+  if (!isLoaded) return null;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -23,7 +47,7 @@ export default function StrugglesScreen({ navigation }) {
       >
         <View style={styles.header}>
           <Pressable
-            onPress={() => navigation.goBack()}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/activity-level')}
             hitSlop={12}
             style={styles.backBtn}
           >
@@ -50,9 +74,19 @@ export default function StrugglesScreen({ navigation }) {
       <View style={styles.footer}>
         <Pressable
           style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-          onPress={() => navigation.navigate('Dashboard')}
+          onPress={async () => {
+             try {
+               const existing = await AsyncStorage.getItem('mockUserAccount');
+               const account = existing ? JSON.parse(existing) : {};
+               account.struggles = selectedId;
+               await AsyncStorage.setItem('mockUserAccount', JSON.stringify(account));
+             } catch (e) {}
+
+             if (isResetting) router.push('/settings');
+             else router.push('/dashboard');
+          }}
         >
-          <Text style={styles.ctaText}>Let's Go!</Text>
+          <Text style={styles.ctaText}>{isResetting ? 'Done' : "Let's Go!"}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
