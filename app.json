@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "What's Cooking",
+    "slug": "whats-cooking",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F2C17A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.whatscooking.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F2C17A"
+      },
+      "package": "com.whatscooking.app"
+    }
+  }
+}
