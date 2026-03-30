@@ -18,10 +18,10 @@ import { USER } from '../src/constants/mockData';
 import { useRouter } from 'expo-router';
 
 const MENU_ITEMS = [
-  'Change Fitness Goal',
-  'Change Motivation Tone',
-  'Change Activity Level',
   'Change Height/Weight',
+  'Change Fitness Goal',
+  'Change Activity Level',
+  'Change Biggest Challenge',
 ];
 
 export default function SettingsScreen() {
@@ -99,6 +99,8 @@ export default function SettingsScreen() {
       router.push('/main-goal?fromSettings=true');
     } else if (label === 'Change Activity Level') {
       router.push('/activity-level?fromSettings=true');
+    } else if (label === 'Change Biggest Challenge') {
+      router.push('/struggles?fromSettings=true');
     } else {
       Alert.alert(label, 'This screen will be available in a future update.');
     }

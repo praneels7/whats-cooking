@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   Alert,
   Image,
@@ -21,7 +21,7 @@ import {
   USER,
   getDateStrip,
 } from '../src/constants/mockData';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RING_SIZE = 118;
@@ -68,21 +68,31 @@ function CalorieRing({ progress }) {
 export default function DashboardScreen() {
   const router = useRouter();
   const [userName, setUserName] = useState(USER.name);
+  const [foodLog, setFoodLog] = useState(FOOD_LOG);
 
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const data = await AsyncStorage.getItem('mockUserAccount');
-        if (data) {
-          const parsed = JSON.parse(data);
-          if (parsed.username) {
-            setUserName(parsed.username);
+  useFocusEffect(
+    useCallback(() => {
+      async function loadData() {
+        try {
+          const uStr = await AsyncStorage.getItem('mockUserAccount');
+          if (uStr) {
+             const parsed = JSON.parse(uStr);
+             if (parsed.username) setUserName(parsed.username);
           }
-        }
-      } catch (e) {}
-    }
-    loadUser();
-  }, []);
+          const fStr = await AsyncStorage.getItem('mockFoodLog');
+          if (fStr) {
+             const parsedLogs = JSON.parse(fStr);
+             // Filter out any legacy corrupted logs that were saved without an image!
+             const validLogs = parsedLogs.filter(log => log.image);
+             setFoodLog([...validLogs.reverse(), ...FOOD_LOG]);
+          } else {
+             setFoodLog(FOOD_LOG);
+          }
+        } catch (e) {}
+      }
+      loadData();
+    }, [])
+  );
   const insets = useSafeAreaInsets();
   const dateStrip = useMemo(() => getDateStrip(), []);
   const todayId = useMemo(() => {
@@ -91,7 +101,39 @@ export default function DashboardScreen() {
   }, [dateStrip]);
   const [selectedDateId, setSelectedDateId] = useState(todayId);
 
-  const progress = CALORIE_STATS.consumed / CALORIE_STATS.goalTotal;
+  const displayLog = useMemo(() => {
+    return foodLog.filter((log) => {
+      // User-logged custom meals carry their tracked timestamps!
+      if (log.date) {
+        return log.date === selectedDateId;
+      }
+      // Hide system defaults (Breakfast, Lunch) for future days
+      if (selectedDateId > todayId) {
+        return false;
+      }
+      return true;
+    });
+  }, [foodLog, selectedDateId, todayId]);
+
+  const dynamicConsumed = useMemo(() => {
+    // Tally up everything currently rendered in the Food Log for 100% mathematical tracking accuracy
+    return displayLog.reduce((sum, log) => sum + log.calories, 0);
+  }, [displayLog]);
+
+  const progress = dynamicConsumed / CALORIE_STATS.goalTotal;
+
+  const handleDeleteLog = async (id) => {
+    try {
+      const fStr = await AsyncStorage.getItem('mockFoodLog');
+      if (fStr) {
+        const parsed = JSON.parse(fStr);
+        const filtered = parsed.filter((log) => log.id !== id);
+        await AsyncStorage.setItem('mockFoodLog', JSON.stringify(filtered));
+        const validLogs = filtered.filter((log) => log.image);
+        setFoodLog([...validLogs.reverse(), ...FOOD_LOG]);
+      }
+    } catch (e) {}
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -150,14 +192,14 @@ export default function DashboardScreen() {
           <View style={styles.calorieRow}>
             <View style={styles.calStat}>
               <Text style={styles.calValue}>
-                {CALORIE_STATS.consumed} kcal
+                {dynamicConsumed} kcal
               </Text>
               <Text style={styles.calLabel}>Consumed</Text>
             </View>
             <CalorieRing progress={progress} />
             <View style={styles.calStat}>
               <Text style={styles.calValue}>
-                {CALORIE_STATS.remaining} kcal
+                {Math.max(0, CALORIE_STATS.goalTotal - dynamicConsumed)} kcal
               </Text>
               <Text style={styles.calLabel}>Remaining</Text>
             </View>
@@ -189,13 +231,14 @@ export default function DashboardScreen() {
         </View>
 
         <Text style={styles.foodLogHeading}>Food Log</Text>
-        {FOOD_LOG.map((item) => (
+        {displayLog.map((item) => (
           <FoodLogItem
             key={item.id}
             name={item.name}
             calories={item.calories}
             imageUri={item.image}
-            onPress={() => {}}
+            onPress={() => router.push({ pathname: '/log-it', params: { name: item.name, calories: item.calories, imageUri: item.image } })}
+            onDelete={item.date ? () => handleDeleteLog(item.id) : null}
           />
         ))}
       </ScrollView>
@@ -213,10 +256,18 @@ export default function DashboardScreen() {
             <Text style={styles.navLabelActive}>Home</Text>
           </View>
           <Pressable
-            onPress={() => Alert.alert('Scanner', 'Coming soon.')}
+            onPress={() => router.push('/search')}
             style={styles.navItem}
           >
-            <Ionicons name="scan-outline" size={28} color={colors.accent} />
+            <Ionicons name="search-outline" size={26} color={colors.accent} />
+            <Text style={styles.navLabel}>Search</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/scan')}
+            style={styles.navItem}
+          >
+            <Ionicons name="scan-outline" size={26} color={colors.accent} />
+            <Text style={styles.navLabel}>Scan</Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/settings')}

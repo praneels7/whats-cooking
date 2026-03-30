@@ -2,18 +2,28 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
 
-export default function FoodLogItem({ name, calories, imageUri, onPress }) {
+export default function FoodLogItem({ name, calories, imageUri, onPress, onDelete }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
-      <Image source={{ uri: imageUri }} style={styles.thumb} />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.thumb} />
+      ) : (
+        <View style={styles.thumb} />
+      )}
       <View style={styles.textCol}>
         <Text style={styles.title}>{name}</Text>
         <Text style={styles.cals}>{calories} cal</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      {onDelete ? (
+        <Pressable onPress={onDelete} style={styles.deleteBtn}>
+          <Ionicons name="trash-outline" size={24} color="#FF6B6B" />
+        </Pressable>
+      ) : (
+        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      )}
     </Pressable>
   );
 }
@@ -55,4 +65,5 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 14,
   },
+  deleteBtn: { paddingHorizontal: 10, paddingVertical: 4 },
 });
