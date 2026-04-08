@@ -72,8 +72,9 @@ const RulerPicker = ({ min, max, value, onValueChange, suffix }) => {
 
 export default function HeightWeight() {
   const router = useRouter();
-  const { fromSettings } = useLocalSearchParams();
+  const { fromSettings, fromReset } = useLocalSearchParams();
   const isEditing = fromSettings === 'true';
+  const isResetting = fromReset === 'true';
   const [topTab, setTopTab] = useState('Weight');
   const [globalUnit, setGlobalUnit] = useState('lbs');
   const [bottomUnit, setBottomUnit] = useState('lb');
@@ -81,6 +82,30 @@ export default function HeightWeight() {
   const [currentWeight, setCurrentWeight] = useState(70);
   const [currentHeight, setCurrentHeight] = useState(170);
   const [targetWeight, setTargetWeight] = useState(70);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const existing = await AsyncStorage.getItem('mockUserAccount');
+        if (existing) {
+          const account = JSON.parse(existing);
+          if (account.physicalMetrics) {
+            const m = account.physicalMetrics;
+            setGlobalUnit(m.unit || 'lbs');
+            setBottomUnit(m.targetUnit || 'lb');
+            setCurrentWeight(m.currentWeight || 70);
+            setTargetWeight(m.targetWeight || 70);
+            setCurrentHeight(m.currentHeight || 170);
+          }
+        }
+      } catch (e) {}
+      setIsLoaded(true);
+    }
+    loadData();
+  }, []);
+
+  if (!isLoaded) return null;
 
   const handleGlobalUnitChange = (newUnit) => {
     if (newUnit === globalUnit) return;
@@ -107,7 +132,13 @@ export default function HeightWeight() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/dob')} hitSlop={12} style={styles.backBtn}>
+        <Pressable onPress={() => {
+          if (isEditing) {
+            router.replace('/settings');
+          } else {
+            router.canGoBack() ? router.back() : router.replace(isResetting ? '/dob?fromReset=true' : '/dob');
+          }
+        }} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#3D2914" />
         </Pressable>
         <Text style={styles.title}>Height and Weight</Text>
@@ -202,7 +233,14 @@ export default function HeightWeight() {
                account.physicalMetrics = data;
                await AsyncStorage.setItem('mockUserAccount', JSON.stringify(account));
              } catch (e) {}
-             isEditing ? (router.canGoBack() ? router.back() : router.replace('/settings')) : router.push('/main-goal');
+             
+             if (isEditing) {
+               router.canGoBack() ? router.back() : router.replace('/settings');
+             } else if (isResetting) {
+               router.push('/main-goal?fromReset=true');
+             } else {
+               router.push('/main-goal');
+             }
           }} 
         >
           <Text style={styles.buttonText}>{isEditing ? 'Done' : 'Next'}</Text>

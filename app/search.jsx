@@ -6,13 +6,13 @@ import {
 } from 'react-native';
 import { colors as COLORS } from '../src/constants/colors';
 import Button from '../src/components/Button';
-import { SEARCH_SUGGESTIONS } from '../src/data/mockData';
+import { SEARCH_CATEGORIES } from '../src/constants/appConfig';
 
 export default function SearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState(SEARCH_SUGGESTIONS);
+  const [results, setResults] = useState(SEARCH_CATEGORIES);
 
   const handleSearch = () => {
     if (query.trim()) {
@@ -50,9 +50,9 @@ export default function SearchScreen() {
               onChangeText={(text) => {
                 setQuery(text);
                 if (!text.trim()) {
-                  setResults(SEARCH_SUGGESTIONS);
+                  setResults(SEARCH_CATEGORIES);
                 } else {
-                  setResults(SEARCH_SUGGESTIONS.filter(s => s.name.toLowerCase().includes(text.toLowerCase())));
+                  setResults(SEARCH_CATEGORIES.filter(s => s.name.toLowerCase().includes(text.toLowerCase())));
                 }
               }}
               onSubmitEditing={handleSearch}

@@ -1,17 +1,57 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DOB() {
   const router = useRouter();
+  const { fromSettings, fromReset } = useLocalSearchParams();
+  const isEditing = fromSettings === 'true';
+  const isResetting = fromReset === 'true';
   const [date, setDate] = useState(new Date(2000, 0, 1));
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const existing = await AsyncStorage.getItem('mockUserAccount');
+        if (existing) {
+          const account = JSON.parse(existing);
+          if (account.dob) {
+            setDate(new Date(account.dob));
+          }
+        }
+      } catch (e) {}
+      setIsLoaded(true);
+    }
+    loadData();
+  }, []);
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setDate(currentDate);
   };
+
+  const handleNext = async () => {
+    try {
+      const existing = await AsyncStorage.getItem('mockUserAccount');
+      const account = existing ? JSON.parse(existing) : {};
+      account.dob = date.toISOString();
+      await AsyncStorage.setItem('mockUserAccount', JSON.stringify(account));
+    } catch (e) {}
+
+    if (isEditing) {
+      router.canGoBack() ? router.back() : router.replace('/settings');
+    } else if (isResetting) {
+      router.push('/height-weight?fromReset=true');
+    } else {
+      router.push('/height-weight');
+    }
+  };
+
+  if (!isLoaded) return null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -59,9 +99,9 @@ export default function DOB() {
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.button}
-          onPress={() => router.push('/height-weight')}
+          onPress={handleNext}
         >
-          <Text style={styles.buttonText}>Next</Text>
+          <Text style={styles.buttonText}>{isEditing ? 'Done' : 'Next'}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

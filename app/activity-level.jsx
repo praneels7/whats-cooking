@@ -9,8 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import OptionCard from '../src/components/OptionCard';
-import { colors } from '../src/constants/colors';
-import { ACTIVITY_OPTIONS } from '../src/constants/mockData';
+import { colors as COLORS } from '../src/constants/colors';
+import { ACTIVITY_OPTIONS } from '../src/constants/appConfig';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -50,11 +50,17 @@ export default function ActivityLevelScreen() {
         <View style={styles.header}>
           {showBack ? (
             <Pressable
-              onPress={() => router.canGoBack() ? router.back() : router.replace('/main-goal')}
+              onPress={() => {
+                if (isEditing) {
+                  router.replace('/settings');
+                } else {
+                  router.canGoBack() ? router.back() : router.replace(isResetting ? '/main-goal?fromReset=true' : '/main-goal');
+                }
+              }}
               hitSlop={12}
               style={styles.backBtn}
             >
-              <Ionicons name="arrow-back" size={26} color={colors.textDark} />
+              <Ionicons name="arrow-back" size={26} color={COLORS.textDark} />
             </Pressable>
           ) : (
             <View style={styles.backPlaceholder} />
@@ -103,7 +109,7 @@ export default function ActivityLevelScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.background,
   },
   scroll: {
     paddingHorizontal: 20,
@@ -129,11 +135,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '700',
-    color: colors.textDark,
+    color: COLORS.textDark,
   },
   sub: {
     fontSize: 16,
-    color: colors.textDark,
+    color: COLORS.textDark,
     fontWeight: '500',
     marginBottom: 20,
     marginTop: 4,
@@ -144,18 +150,18 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   cta: {
-    backgroundColor: colors.accent,
-    borderRadius: colors.radiusMd,
+    backgroundColor: COLORS.accent,
+    borderRadius: COLORS.radiusMd,
     paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.textDark,
+    borderColor: COLORS.textDark,
   },
   ctaPressed: {
     opacity: 0.9,
   },
   ctaText: {
-    color: colors.white,
+    color: COLORS.white,
     fontSize: 17,
     fontWeight: '700',
   },

@@ -13,16 +13,14 @@ import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import MacroBar from '../src/components/MacroBar';
 import FoodLogItem from '../src/components/FoodLogItem';
-import { colors } from '../src/constants/colors';
-import {
-  CALORIE_STATS,
-  FOOD_LOG,
-  MACRO_STATS,
-  USER,
-  getDateStrip,
-} from '../src/constants/mockData';
+import { colors as COLORS } from '../src/constants/colors';
+import { apiClient } from '../src/services/apiClient';
+import { useApi } from '../src/hooks/useApi';
+import { getDateStrip } from '../src/utils/dateUtils';
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80';
 
 const RING_SIZE = 118;
 const RING_STROKE = 10;
@@ -44,7 +42,7 @@ function CalorieRing({ progress }) {
         cx={cx}
         cy={cy}
         r={radius}
-        stroke={colors.ringTrack}
+        stroke={COLORS.ringTrack}
         strokeWidth={strokeWidth}
         fill="none"
         transform={rot}
@@ -53,7 +51,7 @@ function CalorieRing({ progress }) {
         cx={cx}
         cy={cy}
         r={radius}
-        stroke={colors.accent}
+        stroke={COLORS.accent}
         strokeWidth={strokeWidth}
         fill="none"
         strokeDasharray={`${circumference} ${circumference}`}
@@ -67,8 +65,11 @@ function CalorieRing({ progress }) {
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [userName, setUserName] = useState(USER.name);
-  const [foodLog, setFoodLog] = useState(FOOD_LOG);
+  const [user, setUser] = useState({ displayName: 'Guest', avatarUrl: DEFAULT_AVATAR });
+
+  const { data: stats, execute: fetchStats } = useApi(() => apiClient.get('/mock/stats'));
+  const { data: apiFoodLog, execute: fetchApiFoodLog } = useApi(() => apiClient.get('/mock/foodLog'));
+  const [localFoodLog, setLocalFoodLog] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -76,23 +77,33 @@ export default function DashboardScreen() {
         try {
           const uStr = await AsyncStorage.getItem('mockUserAccount');
           if (uStr) {
-             const parsed = JSON.parse(uStr);
-             if (parsed.username) setUserName(parsed.username);
+            const parsed = JSON.parse(uStr);
+            setUser({
+              displayName: parsed.username || 'Friend',
+              avatarUrl: parsed.avatarUrl || DEFAULT_AVATAR
+            });
           }
+
+          // Fetch operational data
+          fetchStats();
+          fetchApiFoodLog();
+
           const fStr = await AsyncStorage.getItem('mockFoodLog');
           if (fStr) {
              const parsedLogs = JSON.parse(fStr);
-             // Filter out any legacy corrupted logs that were saved without an image!
-             const validLogs = parsedLogs.filter(log => log.image);
-             setFoodLog([...validLogs.reverse(), ...FOOD_LOG]);
-          } else {
-             setFoodLog(FOOD_LOG);
+             setLocalFoodLog(parsedLogs.filter(log => log.image).reverse());
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('Loader error:', e);
+        }
       }
       loadData();
     }, [])
   );
+
+  const combinedFoodLog = useMemo(() => {
+    return [...localFoodLog, ...(apiFoodLog || [])];
+  }, [localFoodLog, apiFoodLog]);
   const insets = useSafeAreaInsets();
   const dateStrip = useMemo(() => getDateStrip(), []);
   const todayId = useMemo(() => {
@@ -102,25 +113,23 @@ export default function DashboardScreen() {
   const [selectedDateId, setSelectedDateId] = useState(todayId);
 
   const displayLog = useMemo(() => {
-    return foodLog.filter((log) => {
-      // User-logged custom meals carry their tracked timestamps!
+    return combinedFoodLog.filter((log) => {
       if (log.date) {
         return log.date === selectedDateId;
       }
-      // Hide system defaults (Breakfast, Lunch) for future days
       if (selectedDateId > todayId) {
         return false;
       }
       return true;
     });
-  }, [foodLog, selectedDateId, todayId]);
+  }, [combinedFoodLog, selectedDateId, todayId]);
 
   const dynamicConsumed = useMemo(() => {
-    // Tally up everything currently rendered in the Food Log for 100% mathematical tracking accuracy
     return displayLog.reduce((sum, log) => sum + log.calories, 0);
   }, [displayLog]);
 
-  const progress = dynamicConsumed / CALORIE_STATS.goalTotal;
+  const goalTotal = stats?.goalTotal || 2000;
+  const progress = dynamicConsumed / goalTotal;
 
   const handleDeleteLog = async (id) => {
     try {
@@ -129,8 +138,7 @@ export default function DashboardScreen() {
         const parsed = JSON.parse(fStr);
         const filtered = parsed.filter((log) => log.id !== id);
         await AsyncStorage.setItem('mockFoodLog', JSON.stringify(filtered));
-        const validLogs = filtered.filter((log) => log.image);
-        setFoodLog([...validLogs.reverse(), ...FOOD_LOG]);
+        setLocalFoodLog(filtered.filter((log) => log.image).reverse());
       }
     } catch (e) {}
   };
@@ -145,9 +153,9 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topRow}>
-          <Image source={{ uri: USER.avatarUrl }} style={styles.avatar} />
+          <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           <View style={styles.greetingCol}>
-            <Text style={styles.greetingTitle}>Hi, {userName}</Text>
+            <Text style={styles.greetingTitle}>Hi, {user.displayName}</Text>
             <Text style={styles.greetingSub}>Ready to conquer today?</Text>
           </View>
           <Pressable
@@ -155,7 +163,7 @@ export default function DashboardScreen() {
             hitSlop={10}
             style={styles.bellWrap}
           >
-            <Ionicons name="notifications-outline" size={26} color={colors.white} />
+            <Ionicons name="notifications-outline" size={26} color={COLORS.white} />
             <View style={styles.bellDot} />
           </Pressable>
         </View>
@@ -199,13 +207,13 @@ export default function DashboardScreen() {
             <CalorieRing progress={progress} />
             <View style={styles.calStat}>
               <Text style={styles.calValue}>
-                {Math.max(0, CALORIE_STATS.goalTotal - dynamicConsumed)} kcal
+                {Math.max(0, goalTotal - dynamicConsumed)} kcal
               </Text>
               <Text style={styles.calLabel}>Remaining</Text>
             </View>
           </View>
           <View style={styles.macroRow}>
-            {MACRO_STATS.map((m) => (
+            {(stats?.macros || []).map((m) => (
               <MacroBar
                 key={m.key}
                 label={m.label}
@@ -218,7 +226,7 @@ export default function DashboardScreen() {
 
         <View style={styles.streakCard}>
           <View style={styles.flameBox}>
-            <Ionicons name="flame" size={28} color={colors.accent} />
+            <Ionicons name="flame" size={28} color={COLORS.accent} />
           </View>
           <View style={styles.streakTextCol}>
             <Text style={styles.streakTitle}>
@@ -252,28 +260,28 @@ export default function DashboardScreen() {
       >
         <View style={styles.bottomBar}>
           <View style={styles.navItem}>
-            <Ionicons name="home" size={26} color={colors.accent} />
+            <Ionicons name="home" size={26} color={COLORS.accent} />
             <Text style={styles.navLabelActive}>Home</Text>
           </View>
           <Pressable
             onPress={() => router.push('/search')}
             style={styles.navItem}
           >
-            <Ionicons name="search-outline" size={26} color={colors.accent} />
+            <Ionicons name="search-outline" size={26} color={COLORS.accent} />
             <Text style={styles.navLabel}>Search</Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/scan')}
             style={styles.navItem}
           >
-            <Ionicons name="scan-outline" size={26} color={colors.accent} />
+            <Ionicons name="scan-outline" size={26} color={COLORS.accent} />
             <Text style={styles.navLabel}>Scan</Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/settings')}
             style={styles.navItem}
           >
-            <Ionicons name="settings-outline" size={26} color={colors.accent} />
+            <Ionicons name="settings-outline" size={26} color={COLORS.accent} />
             <Text style={styles.navLabel}>Settings</Text>
           </Pressable>
         </View>
@@ -285,7 +293,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.background,
   },
   scroll: {
     paddingHorizontal: 20,
@@ -301,7 +309,7 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     marginRight: 12,
-    backgroundColor: colors.track,
+    backgroundColor: COLORS.track,
   },
   greetingCol: {
     flex: 1,
@@ -309,11 +317,11 @@ const styles = StyleSheet.create({
   greetingTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.textDark,
+    color: COLORS.textDark,
   },
   greetingSub: {
     fontSize: 14,
-    color: colors.textDark,
+    color: COLORS.textDark,
     opacity: 0.85,
     marginTop: 2,
   },
@@ -321,7 +329,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.datePillInactive,
+    backgroundColor: COLORS.datePillInactive,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -332,7 +340,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.accent,
+    backgroundColor: COLORS.accent,
   },
   dateRow: {
     paddingVertical: 4,
@@ -344,33 +352,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor: colors.datePillInactive,
+    backgroundColor: COLORS.datePillInactive,
     alignItems: 'center',
     marginRight: 10,
     minWidth: 56,
   },
   datePillActive: {
-    backgroundColor: colors.accent,
+    backgroundColor: COLORS.accent,
   },
   dateDay: {
     fontSize: 17,
     fontWeight: '700',
-    color: colors.white,
+    color: COLORS.white,
   },
   dateMonth: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.white,
+    color: COLORS.white,
     opacity: 0.9,
     marginTop: 2,
   },
   dateTextActive: {
-    color: colors.white,
+    color: COLORS.white,
     opacity: 1,
   },
   calorieCard: {
-    backgroundColor: colors.card,
-    borderRadius: colors.radiusLg,
+    backgroundColor: COLORS.card,
+    borderRadius: COLORS.radiusLg,
     padding: 18,
     marginBottom: 14,
     shadowColor: '#1A1A1A',
@@ -390,12 +398,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   calValue: {
-    color: colors.white,
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '800',
   },
   calLabel: {
-    color: colors.textMuted,
+    color: COLORS.textMuted,
     fontSize: 12,
     marginTop: 4,
   },
@@ -406,8 +414,8 @@ const styles = StyleSheet.create({
   streakCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: colors.radiusLg,
+    backgroundColor: COLORS.card,
+    borderRadius: COLORS.radiusLg,
     padding: 16,
     marginBottom: 22,
     shadowColor: '#1A1A1A',
@@ -429,13 +437,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   streakTitle: {
-    color: colors.white,
+    color: COLORS.white,
     fontSize: 15,
     fontWeight: '800',
     lineHeight: 20,
   },
   streakSub: {
-    color: colors.textMuted,
+    color: COLORS.textMuted,
     fontSize: 13,
     marginTop: 6,
     lineHeight: 18,
@@ -443,7 +451,7 @@ const styles = StyleSheet.create({
   foodLogHeading: {
     fontSize: 26,
     fontWeight: '800',
-    color: colors.foodLogTitle,
+    color: COLORS.foodLogTitle,
     marginBottom: 14,
     fontFamily: 'Georgia',
   },
@@ -458,7 +466,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: colors.bottomBar,
+    backgroundColor: COLORS.bottomBar,
     borderRadius: 28,
     paddingVertical: 12,
     paddingHorizontal: 28,
@@ -476,13 +484,13 @@ const styles = StyleSheet.create({
     minWidth: 72,
   },
   navLabel: {
-    color: colors.accent,
+    color: COLORS.accent,
     fontSize: 11,
     fontWeight: '600',
     marginTop: 4,
   },
   navLabelActive: {
-    color: colors.accent,
+    color: COLORS.accent,
     fontSize: 11,
     fontWeight: '700',
     marginTop: 4,

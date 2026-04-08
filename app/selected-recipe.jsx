@@ -1,7 +1,8 @@
-import { RECIPES } from '../src/data/mockData';
-import React from 'react';
+import { apiClient } from '../src/services/apiClient';
+import { useApi } from '../src/hooks/useApi';
+import React, { useEffect } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image
+  View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, ActivityIndicator
 } from 'react-native';
 import { colors as COLORS } from '../src/constants/colors';
 import Button from '../src/components/Button';
@@ -11,14 +12,19 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 export default function SelectedRecipeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { data: recipe, loading, execute: fetchRecipe } = useApi((id) => apiClient.get(`/mock/recipes/${id}`));
 
-  const recipe = RECIPES.find(r => r.id === params.id) || {
-    name: 'Grilled Chicken', calories: 350, weight: '400g', servings: '2 Plate',
-    emoji: '🍗', color: '#8B4513',
-    protein: 40, carbs: 0, fats: 8,
-    proteinGoal: 120, carbsGoal: 150, fatsGoal: 50,
-    ingredients: '2 boneless chicken breasts, olive oil, garlic powder, paprika, salt, black pepper, dried oregano, onion powder, lemon juice',
-  };
+  useEffect(() => {
+    if (params.id) fetchRecipe(params.id);
+  }, [params.id]);
+
+  if (loading || !recipe) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.center]}>
+        <ActivityIndicator size="large" color={COLORS.accent || '#E8930A'} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -67,6 +73,7 @@ export default function SelectedRecipeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   container: { paddingHorizontal: 20, paddingBottom: 40 },
+  center: { alignItems: 'center', justifyContent: 'center' },
   backBtn: { marginTop: 8, marginBottom: 12 },
   back: { fontSize: 26, color: COLORS.heading, fontWeight: '300' },
   hero: {

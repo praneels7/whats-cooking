@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform
 import { useRouter } from 'expo-router';
 import { ChefHat, Utensils } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors as COLORS } from '../src/constants/colors';
 import { styles } from './login';
 
 export default function Signup() {

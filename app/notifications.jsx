@@ -2,12 +2,19 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import NotificationCard from '../src/components/NotificationCard';
-import { colors } from '../src/constants/colors';
-import { NOTIFICATIONS } from '../src/constants/mockData';
+import { colors as COLORS } from '../src/constants/colors';
+import { apiClient } from '../src/services/apiClient';
+import { useApi } from '../src/hooks/useApi';
 import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { data: notifications, execute: fetchNotifications } = useApi(() => apiClient.get('/mock/notifications'));
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
@@ -16,7 +23,7 @@ export default function NotificationsScreen() {
           hitSlop={12}
           style={styles.backBtn}
         >
-          <Ionicons name="arrow-back" size={26} color={colors.textDark} />
+          <Ionicons name="arrow-back" size={26} color={COLORS.textDark} />
         </Pressable>
         <Text style={styles.title}>Notifications</Text>
         <View style={styles.backPlaceholder} />
@@ -26,9 +33,12 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
-        {NOTIFICATIONS.map((n) => (
+        {(notifications || []).map((n) => (
           <NotificationCard key={n.id} message={n.message} />
         ))}
+        {(!notifications || notifications.length === 0) && (
+          <Text style={styles.emptyText}>No notifications for today!</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -37,7 +47,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -60,10 +70,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '700',
-    color: colors.textDark,
+    color: COLORS.textDark,
   },
   list: {
     paddingHorizontal: 20,
     paddingBottom: 32,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: COLORS.textDark,
+    opacity: 0.6,
+    marginTop: 40,
+    fontSize: 16,
   },
 });

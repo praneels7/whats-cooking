@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors as COLORS } from '../src/constants/colors';
 import { ChefHat, Utensils } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -24,12 +25,8 @@ export default function Login() {
         }
       }
 
-      // 2. Fall back to hardcoded mock
-      if (email.trim().toLowerCase() === 'test@example.com' && password === 'password123') {
-        router.replace('/dashboard');
-      } else {
-        setError('Incorrect email/password');
-      }
+      // 2. Fall back check removed - users must create an account via Signup
+      setError('Incorrect email/password or account not found');
     } catch (e) {
       setError('Login error. Please try again.');
     }
@@ -90,7 +87,7 @@ export default function Login() {
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5C87A',
+    backgroundColor: COLORS.background,
     alignItems: 'center',
     paddingTop: 80,
     paddingHorizontal: 24,
@@ -107,7 +104,7 @@ export const styles = StyleSheet.create({
     borderRadius: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1A1A1A',
+    shadowColor: COLORS.card,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -136,11 +133,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     fontSize: 16,
     color: '#3b2a47',
-    backgroundColor: '#E8930A',
+    backgroundColor: COLORS.accent,
     borderColor: '#433a5b',
     borderWidth: 1,
     borderRadius: 50,
-    shadowColor: '#1A1A1A',
+    shadowColor: COLORS.card,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
@@ -155,14 +152,14 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#1A1A1A',
+    shadowColor: COLORS.card,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 4,
   },
   btnText: {
-    color: '#ffffff',
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -185,7 +182,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchText: {
-    color: '#3b2a47',
+    color: COLORS.textDark,
     fontSize: 15,
     marginBottom: 8,
   },
