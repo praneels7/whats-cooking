@@ -55,7 +55,7 @@ export default function MainGoal() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.subtitle}>What's your main goal right now?</Text>
+        <Text style={styles.subtitle}>What&apos;s your main goal right now?</Text>
 
         <View style={styles.goalsContainer}>
           {GOALS.map((goal) => {
@@ -112,8 +112,8 @@ export default function MainGoal() {
           </Text>
 
           <View style={styles.iconRow}>
-            <MaterialCommunityIcons name="snail" size={28} color="white" />
             <MaterialCommunityIcons name="rabbit" size={28} color="white" />
+            <MaterialCommunityIcons name="snail" size={28} color="white" />
           </View>
 
           <Slider
@@ -212,12 +212,13 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: 'transparent',
     position: 'relative',
   },
   goalCardSelected: {
     borderColor: '#E8930A',
+    borderWidth: 3,
   },
   goalText: {
     color: '#ffffff',

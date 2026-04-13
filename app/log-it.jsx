@@ -14,11 +14,10 @@ export default function LogItScreen() {
   const name = params?.name || 'Grilled Chicken';
   const baseCalories = parseInt(params?.calories) || 350;
   const imageUri = params?.imageUri || null;
-  
-  // Create mock macros since dashboard FOOD_LOG doesn't manually map them
-  const baseProtein = 40;
-  const baseCarbs = 0;
-  const baseFats = 8;
+
+  const baseProtein = parseInt(params?.protein) || 30;
+  const baseCarbs = parseInt(params?.carbs) || 20;
+  const baseFats = parseInt(params?.fats) || 8;
   const proteinGoal = 120;
   const carbsGoal = 150;
   const fatsGoal = 50;
@@ -26,7 +25,7 @@ export default function LogItScreen() {
   const [grams, setGrams] = useState(200);
 
   const scaleFactor = grams / 100;
-  const scaledCal = Math.round((baseCalories / 2) * scaleFactor);
+  const scaledCal = Math.round(baseCalories * scaleFactor);
   const scaledProtein = Math.round(baseProtein * scaleFactor);
   const scaledCarbs = Math.round(baseCarbs * scaleFactor);
   const scaledFats = Math.round(baseFats * scaleFactor);
@@ -39,7 +38,11 @@ export default function LogItScreen() {
         id: Date.now().toString(),
         name,
         calories: scaledCal,
-        image: imageUri,
+        protein: scaledProtein,
+        carbs: scaledCarbs,
+        fats: scaledFats,
+        grams,
+        image: imageUri || null,
         date: new Date().toISOString().slice(0, 10),
       });
       await AsyncStorage.setItem('mockFoodLog', JSON.stringify(logArray));

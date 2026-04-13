@@ -38,7 +38,6 @@ const RulerPicker = ({ min, max, value, onValueChange, suffix }) => {
         <Text style={styles.rulerValueText}>{value}</Text>
         <Text style={styles.rulerSuffix}>{suffix}</Text>
       </View>
-      
       <View style={styles.rulerViewport}>
         <View style={styles.needle} />
         <ScrollView
@@ -58,7 +57,7 @@ const RulerPicker = ({ min, max, value, onValueChange, suffix }) => {
               <View key={tick} style={[styles.tickWrapper, { width: TICK_WIDTH }]}>
                 {isTenth && <Text style={styles.tickLabel}>{tick}</Text>}
                 <View style={[
-                  styles.tickLine, 
+                  styles.tickLine,
                   isTenth ? styles.tickLineTall : styles.tickLineShort
                 ]} />
               </View>
@@ -70,18 +69,39 @@ const RulerPicker = ({ min, max, value, onValueChange, suffix }) => {
   );
 };
 
+function UnitToggle({ options, selected, onSelect }) {
+  return (
+    <View style={styles.tinyToggleWrap}>
+      <View style={styles.tinyToggle}>
+        {options.map((opt) => (
+          <Pressable
+            key={opt}
+            style={[styles.tinySegment, selected === opt && styles.tinySegmentActive]}
+            onPress={() => onSelect(opt)}
+          >
+            <Text style={[styles.tinySegmentText, selected === opt && styles.tinySegmentTextActive]}>
+              {opt}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function HeightWeight() {
   const router = useRouter();
   const { fromSettings, fromReset } = useLocalSearchParams();
   const isEditing = fromSettings === 'true';
   const isResetting = fromReset === 'true';
-  const [topTab, setTopTab] = useState('Weight');
-  const [globalUnit, setGlobalUnit] = useState('lbs');
+
+  const [weightUnit, setWeightUnit] = useState('lbs');
+  const [heightUnit, setHeightUnit] = useState('in');
   const [bottomUnit, setBottomUnit] = useState('lb');
-  
-  const [currentWeight, setCurrentWeight] = useState(70);
-  const [currentHeight, setCurrentHeight] = useState(170);
-  const [targetWeight, setTargetWeight] = useState(70);
+
+  const [currentWeight, setCurrentWeight] = useState(150);
+  const [currentHeight, setCurrentHeight] = useState(68);
+  const [targetWeight, setTargetWeight] = useState(140);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -92,11 +112,12 @@ export default function HeightWeight() {
           const account = JSON.parse(existing);
           if (account.physicalMetrics) {
             const m = account.physicalMetrics;
-            setGlobalUnit(m.unit || 'lbs');
+            setWeightUnit(m.weightUnit || m.unit || 'lbs');
+            setHeightUnit(m.heightUnit || (m.unit === 'kg' ? 'cm' : 'in'));
             setBottomUnit(m.targetUnit || 'lb');
-            setCurrentWeight(m.currentWeight || 70);
-            setTargetWeight(m.targetWeight || 70);
-            setCurrentHeight(m.currentHeight || 170);
+            setCurrentWeight(m.currentWeight || 150);
+            setTargetWeight(m.targetWeight || 140);
+            setCurrentHeight(m.currentHeight || 68);
           }
         }
       } catch (e) {}
@@ -107,14 +128,22 @@ export default function HeightWeight() {
 
   if (!isLoaded) return null;
 
-  const handleGlobalUnitChange = (newUnit) => {
-    if (newUnit === globalUnit) return;
-    setGlobalUnit(newUnit);
+  const handleWeightUnitChange = (newUnit) => {
+    if (newUnit === weightUnit) return;
+    setWeightUnit(newUnit);
     if (newUnit === 'kg') {
       setCurrentWeight(prev => Math.max(20, Math.round(prev / 2.20462)));
-      setCurrentHeight(prev => Math.max(90, Math.round(prev * 2.54)));
     } else {
       setCurrentWeight(prev => Math.min(400, Math.round(prev * 2.20462)));
+    }
+  };
+
+  const handleHeightUnitChange = (newUnit) => {
+    if (newUnit === heightUnit) return;
+    setHeightUnit(newUnit);
+    if (newUnit === 'cm') {
+      setCurrentHeight(prev => Math.max(90, Math.round(prev * 2.54)));
+    } else {
       setCurrentHeight(prev => Math.min(96, Math.round(prev / 2.54)));
     }
   };
@@ -146,102 +175,91 @@ export default function HeightWeight() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
-        <Text style={styles.subtitle}>What is your current height and weight?</Text>
 
-        <View style={styles.tinyToggleWrap}>
-           <View style={styles.tinyToggle}>
-             <Pressable style={[styles.tinySegment, globalUnit === 'lbs' && styles.tinySegmentActive]} onPress={() => handleGlobalUnitChange('lbs')}>
-               <Text style={[styles.tinySegmentText, globalUnit === 'lbs' && styles.tinySegmentTextActive]}>
-                 {topTab === 'Weight' ? 'lbs' : 'in'}
-               </Text>
-             </Pressable>
-             <Pressable style={[styles.tinySegment, globalUnit === 'kg' && styles.tinySegmentActive]} onPress={() => handleGlobalUnitChange('kg')}>
-               <Text style={[styles.tinySegmentText, globalUnit === 'kg' && styles.tinySegmentTextActive]}>
-                 {topTab === 'Weight' ? 'kg' : 'cm'}
-               </Text>
-             </Pressable>
-           </View>
-        </View>
-
-        <View style={styles.largeToggleOutline}>
-          <View style={styles.largeToggleInner}>
-            <Pressable style={[styles.largeSegment, topTab === 'Weight' && styles.largeSegmentActive]} onPress={() => setTopTab('Weight')}>
-              <Text style={styles.largeSegmentText}>Weight</Text>
-            </Pressable>
-            <Pressable style={[styles.largeSegment, topTab === 'Height' && styles.largeSegmentActive]} onPress={() => setTopTab('Height')}>
-              <Text style={styles.largeSegmentText}>Height</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {topTab === 'Weight' ? (
-           <RulerPicker 
-             key={`weight-${globalUnit}`}
-             min={globalUnit === 'lbs' ? 40 : 20} 
-             max={globalUnit === 'lbs' ? 400 : 200} 
-             value={currentWeight} 
-             onValueChange={setCurrentWeight} 
-             suffix={globalUnit} 
-           />
-        ) : (
-           <RulerPicker 
-             key={`height-${globalUnit}`}
-             min={globalUnit === 'lbs' ? 36 : 90} 
-             max={globalUnit === 'lbs' ? 96 : 250} 
-             value={currentHeight} 
-             onValueChange={setCurrentHeight} 
-             suffix={globalUnit === 'lbs' ? 'in' : 'cm'} 
-           />
-        )}
+        {/* ── Bar 1: Current Weight ── */}
+        <Text style={styles.sectionTitle}>Current Weight</Text>
+        <UnitToggle
+          options={['lbs', 'kg']}
+          selected={weightUnit}
+          onSelect={handleWeightUnitChange}
+        />
+        <RulerPicker
+          key={`weight-${weightUnit}`}
+          min={weightUnit === 'lbs' ? 40 : 20}
+          max={weightUnit === 'lbs' ? 400 : 200}
+          value={currentWeight}
+          onValueChange={setCurrentWeight}
+          suffix={weightUnit}
+        />
 
         <View style={styles.divider} />
 
+        {/* ── Bar 2: Target Weight ── */}
         <Text style={styles.sectionTitle}>Target Weight</Text>
-        <Text style={styles.subtitle}>What's your target weight?</Text>
-
-        <View style={styles.largeToggleOutline}>
-          <View style={styles.largeToggleInner}>
-            <Pressable style={[styles.largeSegment, bottomUnit === 'lb' && styles.largeSegmentActive]} onPress={() => handleBottomUnitChange('lb')}>
-              <Text style={styles.largeSegmentText}>lb</Text>
-            </Pressable>
-            <Pressable style={[styles.largeSegment, bottomUnit === 'kg' && styles.largeSegmentActive]} onPress={() => handleBottomUnitChange('kg')}>
-              <Text style={styles.largeSegmentText}>kg</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <RulerPicker 
+        <Text style={styles.subtitle}>What&apos;s your target weight?</Text>
+        <UnitToggle
+          options={['lb', 'kg']}
+          selected={bottomUnit}
+          onSelect={handleBottomUnitChange}
+        />
+        <RulerPicker
           key={`target-${bottomUnit}`}
-          min={bottomUnit === 'lb' ? 40 : 20} 
-          max={bottomUnit === 'lb' ? 400 : 200} 
-          value={targetWeight} 
-          onValueChange={setTargetWeight} 
-          suffix={bottomUnit} 
+          min={bottomUnit === 'lb' ? 40 : 20}
+          max={bottomUnit === 'lb' ? 400 : 200}
+          value={targetWeight}
+          onValueChange={setTargetWeight}
+          suffix={bottomUnit}
+        />
+
+        <View style={styles.divider} />
+
+        {/* ── Bar 3: Current Height ── */}
+        <Text style={styles.sectionTitle}>Current Height</Text>
+        <UnitToggle
+          options={['in', 'cm']}
+          selected={heightUnit}
+          onSelect={handleHeightUnitChange}
+        />
+        <RulerPicker
+          key={`height-${heightUnit}`}
+          min={heightUnit === 'in' ? 36 : 90}
+          max={heightUnit === 'in' ? 96 : 250}
+          value={currentHeight}
+          onValueChange={setCurrentHeight}
+          suffix={heightUnit}
         />
 
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.button}
           onPress={async () => {
-             const data = { unit: globalUnit, targetUnit: bottomUnit, currentWeight, targetWeight, currentHeight };
-             try {
-               const existing = await AsyncStorage.getItem('mockUserAccount');
-               const account = existing ? JSON.parse(existing) : {};
-               account.physicalMetrics = data;
-               await AsyncStorage.setItem('mockUserAccount', JSON.stringify(account));
-             } catch (e) {}
-             
-             if (isEditing) {
-               router.canGoBack() ? router.back() : router.replace('/settings');
-             } else if (isResetting) {
-               router.push('/main-goal?fromReset=true');
-             } else {
-               router.push('/main-goal');
-             }
-          }} 
+            const data = {
+              weightUnit,
+              heightUnit,
+              targetUnit: bottomUnit,
+              // legacy key so existing code that reads `unit` still works
+              unit: weightUnit,
+              currentWeight,
+              targetWeight,
+              currentHeight,
+            };
+            try {
+              const existing = await AsyncStorage.getItem('mockUserAccount');
+              const account = existing ? JSON.parse(existing) : {};
+              account.physicalMetrics = data;
+              await AsyncStorage.setItem('mockUserAccount', JSON.stringify(account));
+            } catch (e) {}
+
+            if (isEditing) {
+              router.canGoBack() ? router.back() : router.replace('/settings');
+            } else if (isResetting) {
+              router.push('/main-goal?fromReset=true');
+            } else {
+              router.push('/main-goal');
+            }
+          }}
         >
           <Text style={styles.buttonText}>{isEditing ? 'Done' : 'Next'}</Text>
         </TouchableOpacity>
@@ -270,29 +288,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#3D2914',
-    textAlign: 'center',
-    fontWeight: '500',
-    marginBottom: 10,
-  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#3D2914',
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 5,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#3D2914',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 6,
+    opacity: 0.8,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(70, 46, 21, 0.1)',
-    marginVertical: 20,
+    backgroundColor: 'rgba(70, 46, 21, 0.15)',
+    marginVertical: 24,
   },
   tinyToggleWrap: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   tinyToggle: {
     flexDirection: 'row',
@@ -303,47 +321,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tinySegment: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 5,
   },
   tinySegmentActive: {
     backgroundColor: '#E8930A',
   },
   tinySegmentText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#3D2914',
   },
   tinySegmentTextActive: {
     color: '#fff',
-  },
-  largeToggleOutline: {
-    alignSelf: 'center',
-    padding: 3,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: '#3D2914',
-    marginBottom: 20,
-  },
-  largeToggleInner: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 26,
-    overflow: 'hidden',
-  },
-  largeSegment: {
-    paddingVertical: 14,
-    paddingHorizontal: 36,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  largeSegmentActive: {
-    backgroundColor: '#E8930A',
-  },
-  largeSegmentText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#3D2914',
   },
   rulerContainer: {
     alignItems: 'center',
@@ -417,7 +407,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#3D2914', 
+    borderColor: '#3D2914',
     alignItems: 'center',
   },
   buttonText: {

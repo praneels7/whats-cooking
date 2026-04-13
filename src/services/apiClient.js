@@ -132,16 +132,19 @@ export const apiClient = {
       }
 
       const consumed = logs.reduce((sum, item) => sum + (item.calories || 0), 0);
-      
+      const proteinConsumed = logs.reduce((sum, item) => sum + (item.protein || 0), 0);
+      const carbsConsumed = logs.reduce((sum, item) => sum + (item.carbs || 0), 0);
+      const fatsConsumed = logs.reduce((sum, item) => sum + (item.fats || 0), 0);
+
       const stats = {
         displayName,
         consumed,
         goalTotal,
         remaining: Math.max(0, goalTotal - consumed),
         macros: [
-          { key: 'protein', label: 'Protein', current: Math.min(120, Math.floor(consumed / 10)), target: 120 },
-          { key: 'carbs', label: 'Carbs', current: Math.min(150, Math.floor(consumed / 8)), target: 150 },
-          { key: 'fats', label: 'Fats', current: Math.min(50, Math.floor(consumed / 25)), target: 50 },
+          { key: 'protein', label: 'Protein', current: proteinConsumed, target: 120 },
+          { key: 'carbs', label: 'Carbs', current: carbsConsumed, target: 150 },
+          { key: 'fats', label: 'Fats', current: fatsConsumed, target: 50 },
         ]
       };
       return this.mockFetch(stats);
@@ -179,7 +182,7 @@ export const apiClient = {
   },
 
   async mockFetch(mockData, shouldFail = false) {
-    await new Promise(resolve => setTimeout(resolve, 600)); 
+    await new Promise(resolve => setTimeout(resolve, 150));
     if (shouldFail) {
       return { success: false, error: 'Network timeout.' };
     }

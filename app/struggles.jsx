@@ -65,7 +65,7 @@ export default function StrugglesScreen() {
         </View>
 
         <Text style={styles.sub}>
-          What's your biggest challenge in fitness?
+          What&apos;s your biggest challenge in fitness?
         </Text>
 
         {STRUGGLE_OPTIONS.map((opt) => (

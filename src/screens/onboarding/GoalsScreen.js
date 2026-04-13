@@ -34,7 +34,7 @@ export default function GoalsScreen({ navigation }) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Main Goal</Text>
-        <Text style={styles.subtitle}>What's your main goal right now?</Text>
+        <Text style={styles.subtitle}>What&apos;s your main goal right now?</Text>
 
         {GOALS.map((g) => (
           <OptionCard key={g} label={g} selected={goal === g} onPress={() => setGoal(g)} />

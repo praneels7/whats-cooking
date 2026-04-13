@@ -19,7 +19,7 @@ function RecipeRow({ item, onPress }) {
       )}
       <View style={styles.info}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.meta}>{item.calories} cal &nbsp;&nbsp; {item.weight} Protein.</Text>
+        <Text style={styles.meta}>{item.calories} cal  ·  {item.weight}  ·  {item.protein}g protein</Text>
       </View>
       <Text style={styles.arrow}>›</Text>
     </TouchableOpacity>
@@ -83,7 +83,7 @@ export default function ScanResultsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No recipes found for "{query}"</Text>
+          <Text style={styles.emptyText}>{`No recipes found for "${query}"`}</Text>
         }
       />
     );

@@ -110,7 +110,7 @@ export default function HeightWeightScreen({ navigation }) {
         )}
 
         <Text style={styles.sectionTitle}>Target Weight</Text>
-        <Text style={styles.subtitle}>What's your target weight?</Text>
+        <Text style={styles.subtitle}>What&apos;s your target weight?</Text>
         <UnitToggle options={['lb', 'kg']} selected={weightUnit} onSelect={setWeightUnit} />
         <RulerPicker value={targetWeight} onChange={setTargetWeight} unit={weightUnit} />
 

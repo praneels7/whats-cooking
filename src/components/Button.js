@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../theme/colors';
+import { colors as COLORS } from '../constants/colors';
 
 export default function Button({ title, onPress, style, textStyle, variant = 'primary' }) {
   const isOutline = variant === 'outline';
@@ -17,7 +17,7 @@ export default function Button({ title, onPress, style, textStyle, variant = 'pr
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accent,
     borderRadius: 50,
     paddingVertical: 16,
     alignItems: 'center',

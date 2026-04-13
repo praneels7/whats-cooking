@@ -40,7 +40,7 @@ export default function Login() {
       <View style={styles.logoSection}>
         <View style={styles.logoCircle}>
           <ChefHat size={40} color="#4a2916" strokeWidth={2} style={styles.chefIcon} />
-          <Text style={styles.logoText}>What's</Text>
+          <Text style={styles.logoText}>What&apos;s</Text>
           <Text style={styles.logoText}>Cooking</Text>
           <Utensils size={24} color="#4a2916" style={styles.utensilsIcon} />
         </View>
@@ -52,7 +52,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="EMAIL"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -62,7 +62,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="PASSWORD"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -74,7 +74,7 @@ export default function Login() {
       </View>
 
       <View style={styles.switchAuthMode}>
-        <Text style={styles.switchText}>Don't have an account?</Text>
+        <Text style={styles.switchText}>Don&apos;t have an account?</Text>
         <TouchableOpacity onPress={() => router.push('/signup')}>
           <Text style={styles.linkBtn}>Create an Account</Text>
         </TouchableOpacity>
@@ -133,8 +133,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     fontSize: 16,
     color: '#3b2a47',
-    backgroundColor: COLORS.accent,
-    borderColor: '#433a5b',
+    backgroundColor: COLORS.white,
+    borderColor: 'rgba(0,0,0,0.12)',
     borderWidth: 1,
     borderRadius: 50,
     shadowColor: COLORS.card,
@@ -145,8 +145,9 @@ export const styles = StyleSheet.create({
   },
   createAccountBtn: {
     marginTop: 10,
-    width: '100%',
-    paddingVertical: 18,
+    width: '80%',
+    alignSelf: 'center',
+    paddingVertical: 15,
     backgroundColor: '#e08b1a',
     borderColor: '#433a5b',
     borderWidth: 1,

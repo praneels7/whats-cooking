@@ -1,43 +1,78 @@
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert,
+  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
 } from 'react-native';
 import { colors as COLORS } from '../src/constants/colors';
 
-const SCAN_MODES = ['Food Scan', 'Bar Code', 'Manual Click'];
+const SCAN_MODES = ['Food Scan', 'Bar Code', 'Manual'];
+
+const MODE_CONFIG = {
+  'Food Scan': {
+    emoji: '🍽️',
+    hint: 'Point camera at food or a dish',
+  },
+  'Bar Code': {
+    emoji: '📦',
+    hint: 'Point camera at a product barcode',
+  },
+  'Manual': {
+    emoji: '🔍',
+    hint: 'Search by name or ingredient',
+  },
+};
 
 export default function ScanScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
   const [mode, setMode] = useState('Food Scan');
 
   const handleCapture = () => {
-    // Alert.alert on Web strips the buttons array callbacks, trapping the user.
-    // Instead, we just directly navigate with a parameter to show results!
-    router.push('/scan-results?query=chicken');
+    if (mode === 'Manual') {
+      router.replace('/search');
+      return;
+    }
+    // Food Scan and Bar Code both go to scan-results showing all recipes
+    // (real camera/barcode integration would pass a specific query here)
+    router.push({ pathname: '/scan-results', params: { query: '' } });
   };
+
+  const handleModeChange = (m) => {
+    setMode(m);
+    if (m === 'Manual') {
+      router.replace('/search');
+    }
+  };
+
+  const config = MODE_CONFIG[mode];
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/dashboard')} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/dashboard')}
+          style={styles.backBtn}
+        >
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
         {/* Camera View */}
         <View style={styles.cameraView}>
           <View style={styles.cameraPlaceholder}>
-            <Text style={styles.cameraEmoji}>🍽️</Text>
-            <Text style={styles.cameraHint}>Point camera at food or ingredients</Text>
+            <Text style={styles.cameraEmoji}>{config.emoji}</Text>
+            <Text style={styles.cameraHint}>{config.hint}</Text>
           </View>
+
           {/* Scan Frame */}
-          <View style={styles.scanFrame}>
+          <View style={[styles.scanFrame, mode === 'Bar Code' && styles.scanFrameBar]}>
             <View style={[styles.corner, styles.cornerTL]} />
             <View style={[styles.corner, styles.cornerTR]} />
             <View style={[styles.corner, styles.cornerBL]} />
             <View style={[styles.corner, styles.cornerBR]} />
           </View>
+
+          {mode === 'Bar Code' && (
+            <View style={styles.barcodeLine} />
+          )}
         </View>
 
         {/* Capture Button */}
@@ -50,13 +85,8 @@ export default function ScanScreen() {
           {SCAN_MODES.map((m) => (
             <TouchableOpacity
               key={m}
-              style={styles.modeBtn}
-              onPress={() => {
-                setMode(m);
-                if (m === 'Manual Click') {
-                  router.replace('/search');
-                }
-              }}
+              style={[styles.modeBtn, mode === m && styles.modeBtnActive]}
+              onPress={() => handleModeChange(m)}
             >
               <Text style={[styles.modeText, mode === m && styles.modeTextActive]}>{m}</Text>
             </TouchableOpacity>
@@ -69,12 +99,14 @@ export default function ScanScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, alignItems: 'center', paddingBottom: 30 },
+  container: { flex: 1, alignItems: 'center', paddingBottom: 20 },
   backBtn: { alignSelf: 'flex-start', padding: 16 },
   back: { fontSize: 26, color: COLORS.heading, fontWeight: '300' },
   cameraView: {
     width: '88%',
-    aspectRatio: 0.9,
+    flex: 1,
+    minHeight: 180,
+    maxHeight: 340,
     backgroundColor: '#2A2A2A',
     borderRadius: 20,
     overflow: 'hidden',
@@ -85,12 +117,21 @@ const styles = StyleSheet.create({
   },
   cameraPlaceholder: { alignItems: 'center' },
   cameraEmoji: { fontSize: 80, marginBottom: 16 },
-  cameraHint: { fontSize: 14, color: 'rgba(255,255,255,0.6)', textAlign: 'center', paddingHorizontal: 20 },
+  cameraHint: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
   scanFrame: {
     position: 'absolute',
     width: '65%',
     aspectRatio: 1,
     top: '15%',
+  },
+  scanFrameBar: {
+    aspectRatio: 2,
+    top: '30%',
   },
   corner: {
     position: 'absolute',
@@ -103,15 +144,35 @@ const styles = StyleSheet.create({
   cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 4 },
   cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 4 },
   cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 4 },
+  barcodeLine: {
+    position: 'absolute',
+    width: '55%',
+    height: 2,
+    backgroundColor: COLORS.accent,
+    opacity: 0.8,
+  },
   captureBtn: {
-    width: 72, height: 72, borderRadius: 36,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: COLORS.white,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
     marginBottom: 20,
   },
-  captureInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.white, borderWidth: 2, borderColor: '#ccc' },
+  captureInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: '#ccc',
+  },
   modeBar: {
     flexDirection: 'row',
     backgroundColor: 'rgba(0,0,0,0.15)',
@@ -119,7 +180,23 @@ const styles = StyleSheet.create({
     padding: 4,
     gap: 4,
   },
-  modeBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50 },
-  modeText: { fontSize: 13, fontWeight: '600', color: COLORS.heading, opacity: 0.6 },
-  modeTextActive: { opacity: 1, fontWeight: '800' },
+  modeBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 50,
+  },
+  modeBtnActive: {
+    backgroundColor: COLORS.accent,
+  },
+  modeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.heading,
+    opacity: 0.6,
+  },
+  modeTextActive: {
+    color: COLORS.white,
+    opacity: 1,
+    fontWeight: '800',
+  },
 });

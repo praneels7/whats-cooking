@@ -91,7 +91,7 @@ export default function DashboardScreen() {
           const fStr = await AsyncStorage.getItem('mockFoodLog');
           if (fStr) {
              const parsedLogs = JSON.parse(fStr);
-             setLocalFoodLog(parsedLogs.filter(log => log.image).reverse());
+             setLocalFoodLog([...parsedLogs].reverse());
           }
         } catch (e) {
           console.error('Loader error:', e);
@@ -138,7 +138,7 @@ export default function DashboardScreen() {
         const parsed = JSON.parse(fStr);
         const filtered = parsed.filter((log) => log.id !== id);
         await AsyncStorage.setItem('mockFoodLog', JSON.stringify(filtered));
-        setLocalFoodLog(filtered.filter((log) => log.image).reverse());
+        setLocalFoodLog([...filtered].reverse());
       }
     } catch (e) {}
   };
@@ -230,10 +230,10 @@ export default function DashboardScreen() {
           </View>
           <View style={styles.streakTextCol}>
             <Text style={styles.streakTitle}>
-              Don't Let The Momentum Of Streak
+              Don&apos;t Let The Momentum Of Streak
             </Text>
             <Text style={styles.streakSub}>
-              Keep it going – you're building momentum!
+              Keep it going &ndash; you&apos;re building momentum!
             </Text>
           </View>
         </View>
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   streakCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: '#EB9114',
     borderRadius: COLORS.radiusLg,
     padding: 16,
     marginBottom: 22,
@@ -437,13 +437,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   streakTitle: {
-    color: COLORS.white,
+    color: '#000000',
     fontSize: 15,
     fontWeight: '800',
     lineHeight: 20,
   },
   streakSub: {
-    color: COLORS.textMuted,
+    color: '#000000',
     fontSize: 13,
     marginTop: 6,
     lineHeight: 18,

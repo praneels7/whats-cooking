@@ -17,7 +17,7 @@ export default function HomeIngredientsInput() {
       </View>
       <View style={styles.content}>
         <Ionicons name="fast-food-outline" size={80} color="#E8930A" style={{marginBottom: 20}} />
-        <Text style={styles.sub}>What's in your fridge?</Text>
+        <Text style={styles.sub}>What&apos;s in your fridge?</Text>
         <Text style={styles.desc}>This is the placeholder for the Ingredients Input feature!</Text>
         <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.btn}>
            <Text style={styles.btnText}>Go To Dashboard</Text>

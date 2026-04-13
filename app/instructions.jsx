@@ -62,7 +62,17 @@ export default function InstructionsScreen() {
 
         <Button
           title="Next"
-          onPress={() => router.push({ pathname: '/log-it', params: { name: recipe.name, calories: recipe.calories, imageUri: recipe.imageUri } })}
+          onPress={() => router.push({
+            pathname: '/log-it',
+            params: {
+              name: recipe.name,
+              calories: recipe.calories,
+              imageUri: recipe.imageUri || '',
+              protein: recipe.protein || 0,
+              carbs: recipe.carbs || 0,
+              fats: recipe.fats || 0,
+            },
+          })}
           style={styles.btn}
         />
       </ScrollView>

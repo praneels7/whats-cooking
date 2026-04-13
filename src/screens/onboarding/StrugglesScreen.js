@@ -35,7 +35,7 @@ export default function StrugglesScreen({ navigation }) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Struggles</Text>
-        <Text style={styles.subtitle}>What's your biggest challenge in fitness?</Text>
+        <Text style={styles.subtitle}>What&apos;s your biggest challenge in fitness?</Text>
 
         <View style={styles.options}>
           {STRUGGLES.map((s) => (

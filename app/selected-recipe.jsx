@@ -55,9 +55,9 @@ export default function SelectedRecipeScreen() {
         <Text style={styles.ingredients}>{recipe.ingredients}</Text>
 
         <View style={styles.macros}>
-          <MacroBar label="Protein" current={recipe.protein} target={recipe.proteinGoal} />
-          <MacroBar label="Carbs" current={recipe.carbs} target={recipe.carbsGoal} />
-          <MacroBar label="Fats" current={recipe.fats} target={recipe.fatsGoal} />
+          <MacroBar label="Protein" current={recipe.protein} target={recipe.proteinGoal} labelColor="#000000" />
+          <MacroBar label="Carbs" current={recipe.carbs} target={recipe.carbsGoal} labelColor="#000000" />
+          <MacroBar label="Fats" current={recipe.fats} target={recipe.fatsGoal} labelColor="#000000" />
         </View>
 
         <Button

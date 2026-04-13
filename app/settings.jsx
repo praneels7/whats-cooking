@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,6 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors as COLORS } from '../src/constants/colors';
 import { useRouter } from 'expo-router';
+
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80';
 
 const MENU_ITEMS = [
   'Change Height/Weight',
@@ -30,6 +33,7 @@ export default function SettingsScreen() {
   const [displayUsername, setDisplayUsername] = useState('User');
   const [username, setUsername] = useState('User');
   const [email, setEmail] = useState('email@example.com');
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPw, setShowNewPw] = useState(false);
@@ -48,6 +52,7 @@ export default function SettingsScreen() {
           if (parsed.email) {
             setEmail(parsed.email);
           }
+          setAvatarUrl(parsed.avatarUrl || DEFAULT_AVATAR);
         }
       } catch (e) {}
     }
@@ -127,8 +132,14 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.avatarBlock}>
-          <View style={styles.avatarCircle}>
-            <Ionicons name="person" size={48} color={COLORS.white} />
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarCircle}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
+              ) : (
+                <Ionicons name="person" size={48} color={COLORS.white} />
+              )}
+            </View>
             <View style={styles.camBadge}>
               <Ionicons name="camera" size={16} color={COLORS.white} />
             </View>
@@ -165,8 +176,8 @@ export default function SettingsScreen() {
               <Switch
                 value={notificationsOn}
                 onValueChange={setNotificationsOn}
-                trackColor={{ false: '#555', true: COLORS.accent }}
-                thumbColor={COLORS.white}
+                trackColor={{ false: '#555', true: '#FFFFFF' }}
+                thumbColor={notificationsOn ? COLORS.accent : COLORS.white}
                 ios_backgroundColor="#444"
               />
             </View>
@@ -347,6 +358,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  avatarWrapper: {
+    width: 112,
+    height: 112,
+  },
   avatarCircle: {
     width: 112,
     height: 112,
@@ -354,13 +369,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.avatarPlaceholder,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
   },
   camBadge: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
+    bottom: 0,
+    right: 0,
     width: 32,
     height: 32,
+    zIndex: 10,
+    elevation: 10,
     borderRadius: 16,
     backgroundColor: COLORS.accent,
     alignItems: 'center',
