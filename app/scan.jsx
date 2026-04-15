@@ -1,49 +1,85 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { colors as COLORS } from '../src/constants/colors';
 
 const SCAN_MODES = ['Food Scan', 'Bar Code', 'Manual'];
 
-const MODE_CONFIG = {
-  'Food Scan': {
-    emoji: '🍽️',
-    hint: 'Point camera at food or a dish',
-  },
-  'Bar Code': {
-    emoji: '📦',
-    hint: 'Point camera at a product barcode',
-  },
-  'Manual': {
-    emoji: '🔍',
-    hint: 'Search by name or ingredient',
-  },
-};
-
 export default function ScanScreen() {
   const router = useRouter();
   const [mode, setMode] = useState('Food Scan');
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanned, setScanned] = useState(false);
+
+  useEffect(() => {
+    if (!permission?.granted) {
+      requestPermission();
+    }
+  }, []);
 
   const handleCapture = () => {
     if (mode === 'Manual') {
       router.replace('/search');
       return;
     }
-    // Food Scan and Bar Code both go to scan-results showing all recipes
-    // (real camera/barcode integration would pass a specific query here)
-    router.push({ pathname: '/scan-results', params: { query: '' } });
+    if (mode === 'Food Scan') {
+      router.push({ pathname: '/search' });
+      return;
+    }
   };
 
   const handleModeChange = (m) => {
     setMode(m);
+    setScanned(false);
     if (m === 'Manual') {
       router.replace('/search');
     }
   };
 
-  const config = MODE_CONFIG[mode];
+  const handleBarcodeScanned = ({ data }) => {
+    if (scanned) return;
+    setScanned(true);
+    Alert.alert('Barcode Scanned', `Code: ${data}`, [
+      {
+        text: 'Search Recipes',
+        onPress: () => {
+          setScanned(false);
+          router.push({ pathname: '/scan-results', params: { query: data } });
+        }
+      },
+      {
+        text: 'Scan Again',
+        onPress: () => setScanned(false),
+      }
+    ]);
+  };
+
+  if (!permission) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.center]}>
+        <Text style={styles.permText}>Requesting camera permission...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.center]}>
+        <Text style={styles.permText}>Camera access is required for scanning.</Text>
+        <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
+          <Text style={styles.permBtnText}>Grant Permission</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -56,23 +92,30 @@ export default function ScanScreen() {
         </TouchableOpacity>
 
         {/* Camera View */}
-        <View style={styles.cameraView}>
-          <View style={styles.cameraPlaceholder}>
-            <Text style={styles.cameraEmoji}>{config.emoji}</Text>
-            <Text style={styles.cameraHint}>{config.hint}</Text>
-          </View>
-
-          {/* Scan Frame */}
-          <View style={[styles.scanFrame, mode === 'Bar Code' && styles.scanFrameBar]}>
-            <View style={[styles.corner, styles.cornerTL]} />
-            <View style={[styles.corner, styles.cornerTR]} />
-            <View style={[styles.corner, styles.cornerBL]} />
-            <View style={[styles.corner, styles.cornerBR]} />
-          </View>
-
-          {mode === 'Bar Code' && (
-            <View style={styles.barcodeLine} />
-          )}
+        <View style={styles.cameraWrapper}>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            onBarcodeScanned={mode === 'Bar Code' ? handleBarcodeScanned : undefined}
+            barcodeScannerSettings={{
+              barcodeTypes: ['qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+            }}
+          >
+            {/* Scan Frame Overlay */}
+            <View style={styles.overlay}>
+              <View style={[styles.scanFrame, mode === 'Bar Code' && styles.scanFrameBar]}>
+                <View style={[styles.corner, styles.cornerTL]} />
+                <View style={[styles.corner, styles.cornerTR]} />
+                <View style={[styles.corner, styles.cornerBL]} />
+                <View style={[styles.corner, styles.cornerBR]} />
+              </View>
+              <Text style={styles.cameraHint}>
+                {mode === 'Food Scan' ? 'Point camera at food or a dish' :
+                 mode === 'Bar Code' ? 'Point camera at a product barcode' :
+                 'Search by name or ingredient'}
+              </Text>
+            </View>
+          </CameraView>
         </View>
 
         {/* Capture Button */}
@@ -100,38 +143,32 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   container: { flex: 1, alignItems: 'center', paddingBottom: 20 },
+  center: { alignItems: 'center', justifyContent: 'center' },
   backBtn: { alignSelf: 'flex-start', padding: 16 },
   back: { fontSize: 26, color: COLORS.heading, fontWeight: '300' },
-  cameraView: {
+  cameraWrapper: {
     width: '88%',
     flex: 1,
     minHeight: 180,
     maxHeight: 340,
-    backgroundColor: '#2A2A2A',
     borderRadius: 20,
     overflow: 'hidden',
+    marginBottom: 20,
+  },
+  camera: { flex: 1 },
+  overlay: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    position: 'relative',
-  },
-  cameraPlaceholder: { alignItems: 'center' },
-  cameraEmoji: { fontSize: 80, marginBottom: 16 },
-  cameraHint: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
-    textAlign: 'center',
-    paddingHorizontal: 20,
   },
   scanFrame: {
-    position: 'absolute',
     width: '65%',
     aspectRatio: 1,
-    top: '15%',
+    position: 'relative',
+    marginBottom: 16,
   },
   scanFrameBar: {
     aspectRatio: 2,
-    top: '30%',
   },
   corner: {
     position: 'absolute',
@@ -144,59 +181,37 @@ const styles = StyleSheet.create({
   cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 4 },
   cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 4 },
   cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 4 },
-  barcodeLine: {
-    position: 'absolute',
-    width: '55%',
-    height: 2,
-    backgroundColor: COLORS.accent,
-    opacity: 0.8,
+  cameraHint: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   captureBtn: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 72, height: 72, borderRadius: 36,
     backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
     marginBottom: 20,
   },
   captureInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: '#ccc',
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: COLORS.white, borderWidth: 2, borderColor: '#ccc',
   },
   modeBar: {
     flexDirection: 'row',
     backgroundColor: 'rgba(0,0,0,0.15)',
-    borderRadius: 50,
-    padding: 4,
-    gap: 4,
+    borderRadius: 50, padding: 4, gap: 4,
   },
-  modeBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 50,
-  },
-  modeBtnActive: {
-    backgroundColor: COLORS.accent,
-  },
-  modeText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.heading,
-    opacity: 0.6,
-  },
-  modeTextActive: {
-    color: COLORS.white,
-    opacity: 1,
-    fontWeight: '800',
-  },
+  modeBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50 },
+  modeBtnActive: { backgroundColor: COLORS.accent },
+  modeText: { fontSize: 13, fontWeight: '600', color: COLORS.heading, opacity: 0.6 },
+  modeTextActive: { color: COLORS.white, opacity: 1, fontWeight: '800' },
+  permText: { fontSize: 16, color: COLORS.heading, textAlign: 'center', marginBottom: 20, paddingHorizontal: 40 },
+  permBtn: { backgroundColor: COLORS.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
+  permBtnText: { color: COLORS.white, fontWeight: '700', fontSize: 16 },
 });
