@@ -1,6 +1,8 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -10,15 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
-import { Ionicons } from '@expo/vector-icons';
-import MacroBar from '../src/components/MacroBar';
 import FoodLogItem from '../src/components/FoodLogItem';
+import MacroBar from '../src/components/MacroBar';
 import { colors as COLORS } from '../src/constants/colors';
-import { apiClient } from '../src/services/apiClient';
 import { useApi } from '../src/hooks/useApi';
+import { apiClient } from '../src/services/apiClient';
 import { getDateStrip } from '../src/utils/dateUtils';
-import { useRouter, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80';
 
@@ -68,7 +67,6 @@ export default function DashboardScreen() {
   const [user, setUser] = useState({ displayName: 'Guest', avatarUrl: DEFAULT_AVATAR });
 
   const { data: stats, execute: fetchStats } = useApi(() => apiClient.get('/mock/stats'));
-  const { data: apiFoodLog, execute: fetchApiFoodLog } = useApi(() => apiClient.get('/mock/foodLog'));
   const [localFoodLog, setLocalFoodLog] = useState([]);
 
   useFocusEffect(
@@ -84,14 +82,12 @@ export default function DashboardScreen() {
             });
           }
 
-          // Fetch operational data
           fetchStats();
-          fetchApiFoodLog();
 
           const fStr = await AsyncStorage.getItem('mockFoodLog');
           if (fStr) {
-             const parsedLogs = JSON.parse(fStr);
-             setLocalFoodLog([...parsedLogs].reverse());
+            const parsedLogs = JSON.parse(fStr);
+            setLocalFoodLog([...parsedLogs].reverse());
           }
         } catch (e) {
           console.error('Loader error:', e);
@@ -102,8 +98,9 @@ export default function DashboardScreen() {
   );
 
   const combinedFoodLog = useMemo(() => {
-    return [...localFoodLog, ...(apiFoodLog || [])];
-  }, [localFoodLog, apiFoodLog]);
+    return [...localFoodLog];
+  }, [localFoodLog]);
+
   const insets = useSafeAreaInsets();
   const dateStrip = useMemo(() => getDateStrip(), []);
   const todayId = useMemo(() => {
@@ -181,14 +178,10 @@ export default function DashboardScreen() {
                 onPress={() => setSelectedDateId(d.id)}
                 style={[styles.datePill, active && styles.datePillActive]}
               >
-                <Text
-                  style={[styles.dateDay, active && styles.dateTextActive]}
-                >
+                <Text style={[styles.dateDay, active && styles.dateTextActive]}>
                   {d.day}
                 </Text>
-                <Text
-                  style={[styles.dateMonth, active && styles.dateTextActive]}
-                >
+                <Text style={[styles.dateMonth, active && styles.dateTextActive]}>
                   {d.month}
                 </Text>
               </Pressable>
@@ -199,16 +192,12 @@ export default function DashboardScreen() {
         <View style={styles.calorieCard}>
           <View style={styles.calorieRow}>
             <View style={styles.calStat}>
-              <Text style={styles.calValue}>
-                {dynamicConsumed} kcal
-              </Text>
+              <Text style={styles.calValue}>{dynamicConsumed} kcal</Text>
               <Text style={styles.calLabel}>Consumed</Text>
             </View>
             <CalorieRing progress={progress} />
             <View style={styles.calStat}>
-              <Text style={styles.calValue}>
-                {Math.max(0, goalTotal - dynamicConsumed)} kcal
-              </Text>
+              <Text style={styles.calValue}>{Math.max(0, goalTotal - dynamicConsumed)} kcal</Text>
               <Text style={styles.calLabel}>Remaining</Text>
             </View>
           </View>
@@ -239,9 +228,9 @@ export default function DashboardScreen() {
         </View>
 
         <Text style={styles.foodLogHeading}>Food Log</Text>
-        {displayLog.map((item) => (
+        {displayLog.map((item, index) => (
           <FoodLogItem
-            key={item.id}
+            key={`${item.id}-${index}`}
             name={item.name}
             calories={item.calories}
             imageUri={item.image}
@@ -263,24 +252,15 @@ export default function DashboardScreen() {
             <Ionicons name="home" size={26} color={COLORS.accent} />
             <Text style={styles.navLabelActive}>Home</Text>
           </View>
-          <Pressable
-            onPress={() => router.push('/search')}
-            style={styles.navItem}
-          >
+          <Pressable onPress={() => router.push('/search')} style={styles.navItem}>
             <Ionicons name="search-outline" size={26} color={COLORS.accent} />
             <Text style={styles.navLabel}>Search</Text>
           </Pressable>
-          <Pressable
-            onPress={() => router.push('/scan')}
-            style={styles.navItem}
-          >
+          <Pressable onPress={() => router.push('/scan')} style={styles.navItem}>
             <Ionicons name="scan-outline" size={26} color={COLORS.accent} />
             <Text style={styles.navLabel}>Scan</Text>
           </Pressable>
-          <Pressable
-            onPress={() => router.push('/settings')}
-            style={styles.navItem}
-          >
+          <Pressable onPress={() => router.push('/settings')} style={styles.navItem}>
             <Ionicons name="settings-outline" size={26} color={COLORS.accent} />
             <Text style={styles.navLabel}>Settings</Text>
           </Pressable>
@@ -291,208 +271,75 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    marginRight: 12,
-    backgroundColor: COLORS.track,
-  },
-  greetingCol: {
-    flex: 1,
-  },
-  greetingTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  greetingSub: {
-    fontSize: 14,
-    color: COLORS.textDark,
-    opacity: 0.85,
-    marginTop: 2,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+  scroll: { paddingHorizontal: 20, paddingTop: 8 },
+  topRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
+  avatar: { width: 52, height: 52, borderRadius: 26, marginRight: 12, backgroundColor: COLORS.track },
+  greetingCol: { flex: 1 },
+  greetingTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textDark },
+  greetingSub: { fontSize: 14, color: COLORS.textDark, opacity: 0.85, marginTop: 2 },
   bellWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: COLORS.datePillInactive,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   bellDot: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.accent,
+    position: 'absolute', top: 10, right: 10,
+    width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent,
   },
-  dateRow: {
-    paddingVertical: 4,
-    paddingRight: 8,
-    marginBottom: 18,
-    gap: 10,
-  },
+  dateRow: { paddingVertical: 4, paddingRight: 8, marginBottom: 18, gap: 10 },
   datePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: COLORS.datePillInactive,
-    alignItems: 'center',
-    marginRight: 10,
-    minWidth: 56,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14,
+    backgroundColor: COLORS.datePillInactive, alignItems: 'center',
+    marginRight: 10, minWidth: 56,
   },
-  datePillActive: {
-    backgroundColor: COLORS.accent,
-  },
-  dateDay: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  dateMonth: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.white,
-    opacity: 0.9,
-    marginTop: 2,
-  },
-  dateTextActive: {
-    color: COLORS.white,
-    opacity: 1,
-  },
+  datePillActive: { backgroundColor: COLORS.accent },
+  dateDay: { fontSize: 17, fontWeight: '700', color: COLORS.white },
+  dateMonth: { fontSize: 12, fontWeight: '600', color: COLORS.white, opacity: 0.9, marginTop: 2 },
+  dateTextActive: { color: COLORS.white, opacity: 1 },
   calorieCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: COLORS.radiusLg,
-    padding: 18,
-    marginBottom: 14,
-    shadowColor: '#1A1A1A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: COLORS.card, borderRadius: COLORS.radiusLg,
+    padding: 18, marginBottom: 14,
+    shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
   },
   calorieRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 18,
   },
-  calStat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  calValue: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  calLabel: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
+  calStat: { flex: 1, alignItems: 'center' },
+  calValue: { color: COLORS.white, fontSize: 16, fontWeight: '800' },
+  calLabel: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
+  macroRow: { flexDirection: 'row', justifyContent: 'space-between' },
   streakCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EB9114',
-    borderRadius: COLORS.radiusLg,
-    padding: 16,
-    marginBottom: 22,
-    shadowColor: '#1A1A1A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#EB9114', borderRadius: COLORS.radiusLg,
+    padding: 16, marginBottom: 22,
+    shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12, shadowRadius: 6, elevation: 3,
   },
   flameBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: '#111',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
+    width: 52, height: 52, borderRadius: 12,
+    backgroundColor: '#111', alignItems: 'center',
+    justifyContent: 'center', marginRight: 14,
   },
-  streakTextCol: {
-    flex: 1,
-  },
-  streakTitle: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 20,
-  },
-  streakSub: {
-    color: '#000000',
-    fontSize: 13,
-    marginTop: 6,
-    lineHeight: 18,
-  },
+  streakTextCol: { flex: 1 },
+  streakTitle: { color: '#000000', fontSize: 15, fontWeight: '800', lineHeight: 20 },
+  streakSub: { color: '#000000', fontSize: 13, marginTop: 6, lineHeight: 18 },
   foodLogHeading: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.foodLogTitle,
-    marginBottom: 14,
-    fontFamily: 'Georgia',
+    fontSize: 26, fontWeight: '800', color: COLORS.foodLogTitle,
+    marginBottom: 14, fontFamily: 'Georgia',
   },
-  bottomWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-  },
+  bottomWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
   bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: COLORS.bottomBar,
-    borderRadius: 28,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    marginHorizontal: 24,
-    minWidth: 280,
-    shadowColor: '#1A1A1A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+    backgroundColor: COLORS.bottomBar, borderRadius: 28,
+    paddingVertical: 12, paddingHorizontal: 28,
+    marginHorizontal: 24, minWidth: 280,
+    shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 10, elevation: 8,
   },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 72,
-  },
-  navLabel: {
-    color: COLORS.accent,
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  navLabelActive: {
-    color: COLORS.accent,
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 4,
-  },
+  navItem: { alignItems: 'center', justifyContent: 'center', minWidth: 72 },
+  navLabel: { color: COLORS.accent, fontSize: 11, fontWeight: '600', marginTop: 4 },
+  navLabelActive: { color: COLORS.accent, fontSize: 11, fontWeight: '700', marginTop: 4 },
 });

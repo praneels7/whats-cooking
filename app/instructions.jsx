@@ -1,31 +1,48 @@
-import { apiClient } from '../src/services/apiClient';
-import { useApi } from '../src/hooks/useApi';
-import React, { useEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, ActivityIndicator
+  ActivityIndicator,
+  Image,
+  SafeAreaView, ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { colors as COLORS } from '../src/constants/colors';
 import Button from '../src/components/Button';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { colors as COLORS } from '../src/constants/colors';
+import { apiClient } from '../src/services/apiClient';
 
 const DEFAULT_INSTRUCTIONS = [
-  'Preheat the grill to medium-high heat (about 400°F / 200°C).',
-  'Pat the chicken breasts dry with a paper towel.',
-  'In a small bowl, mix olive oil, garlic powder, paprika, salt, black pepper, oregano, onion powder, and lemon juice.',
-  'Rub the seasoning mixture evenly over both sides of the chicken breasts.',
-  'Place the chicken on the hot grill and cook for 6–7 minutes on the first side.',
-  'Flip the chicken and grill for another 6–7 minutes, or until the internal temperature reaches 165°F (74°C).',
-  'Remove the chicken from the grill and let it rest for 3–5 minutes before serving.',
-  'Slice and serve warm. Optionally garnish with fresh parsley or a squeeze of lemon.',
+  'Gather all ingredients and prepare your workspace.',
+  'Follow the recipe steps carefully.',
+  'Cook until done and serve warm.',
 ];
 
 export default function InstructionsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { data: recipe, loading, execute: fetchRecipe } = useApi((id) => apiClient.get(`/mock/recipes/${id}`));
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (params.id) fetchRecipe(params.id);
+    const fetchRecipe = async () => {
+      if (!params.id) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await apiClient.get(`/recipes/${params.id}`);
+        if (response.success) {
+          setRecipe(response.data);
+        }
+      } catch (e) {
+        console.log('Error fetching recipe:', e.message);
+      }
+      setLoading(false);
+    };
+    fetchRecipe();
   }, [params.id]);
 
   if (loading || !recipe) {
@@ -36,21 +53,30 @@ export default function InstructionsScreen() {
     );
   }
 
-  const steps = recipe.instructions || DEFAULT_INSTRUCTIONS;
+  // Spoonacular returns instructions as analyzedInstructions array
+  let steps = DEFAULT_INSTRUCTIONS;
+  if (recipe.analyzedInstructions && recipe.analyzedInstructions.length > 0) {
+    steps = recipe.analyzedInstructions[0].steps.map((s) => s.step);
+  } else if (recipe.instructions) {
+    steps = [recipe.instructions];
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/dashboard')} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/dashboard')}
+          style={styles.backBtn}
+        >
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Instructions</Text>
+        <Text style={styles.title}>{recipe.title || 'Instructions'}</Text>
 
-        {recipe.imageUri ? (
-          <Image source={{ uri: recipe.imageUri }} style={styles.heroImg} />
+        {recipe.image ? (
+          <Image source={{ uri: recipe.image }} style={styles.heroImg} />
         ) : (
-          <View style={[styles.hero, { backgroundColor: recipe.color || '#8B4513' }]}>
-            <Text style={styles.heroEmoji}>{recipe.emoji || '🍗'}</Text>
+          <View style={[styles.hero, { backgroundColor: '#E8951A' }]}>
+            <Text style={styles.heroEmoji}>🍽️</Text>
           </View>
         )}
 
@@ -61,16 +87,16 @@ export default function InstructionsScreen() {
         </View>
 
         <Button
-          title="Next"
+          title="Log This Meal"
           onPress={() => router.push({
             pathname: '/log-it',
             params: {
-              name: recipe.name,
-              calories: recipe.calories,
-              imageUri: recipe.imageUri || '',
-              protein: recipe.protein || 0,
-              carbs: recipe.carbs || 0,
-              fats: recipe.fats || 0,
+              name: recipe.title || 'Meal',
+              calories: recipe.nutrition?.nutrients?.find(n => n.name === 'Calories')?.amount || 0,
+              imageUri: recipe.image || '',
+              protein: recipe.nutrition?.nutrients?.find(n => n.name === 'Protein')?.amount || 0,
+              carbs: recipe.nutrition?.nutrients?.find(n => n.name === 'Carbohydrates')?.amount || 0,
+              fats: recipe.nutrition?.nutrients?.find(n => n.name === 'Fat')?.amount || 0,
             },
           })}
           style={styles.btn}
@@ -88,27 +114,15 @@ const styles = StyleSheet.create({
   back: { fontSize: 26, color: COLORS.heading, fontWeight: '300' },
   title: { fontSize: 24, fontWeight: '800', color: COLORS.heading, textAlign: 'center', marginBottom: 16 },
   hero: {
-    width: '100%',
-    height: 200,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
+    width: '100%', height: 200, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 20,
   },
-  heroImg: {
-    width: '100%',
-    height: 280,
-    borderRadius: 24,
-    marginBottom: 20,
-  },
+  heroImg: { width: '100%', height: 280, borderRadius: 24, marginBottom: 20 },
   heroEmoji: { fontSize: 80 },
   steps: { marginBottom: 24 },
   step: {
-    fontSize: 14,
-    color: COLORS.heading,
-    lineHeight: 22,
-    marginBottom: 14,
-    opacity: 0.9,
+    fontSize: 14, color: COLORS.heading, lineHeight: 22,
+    marginBottom: 14, opacity: 0.9,
   },
   btn: {},
 });
