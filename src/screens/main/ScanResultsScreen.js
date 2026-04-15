@@ -1,26 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity,
+  ActivityIndicator,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useApp } from '../../context/AppContext';
 import { COLORS } from '../../theme/colors';
-import { RECIPES } from '../../data/mockData';
 
 function RecipeRow({ item, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <View style={[styles.thumb, { backgroundColor: item.color }]}>
-        <Text style={styles.thumbEmoji}>{item.emoji}</Text>
+      <View style={[styles.thumb, { backgroundColor: '#E8951A' }]}>
+        <Text style={styles.thumbEmoji}>🍽️</Text>
       </View>
       <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.meta}>{item.calories} cal &nbsp;&nbsp; {item.weight} Protein.</Text>
+        <Text style={styles.name}>{item.title}</Text>
+        <Text style={styles.meta}>Used: {item.usedIngredientCount} ingredients</Text>
       </View>
       <Text style={styles.arrow}>›</Text>
     </TouchableOpacity>
   );
 }
 
-export default function ScanResultsScreen({ navigation }) {
+export default function ScanResultsScreen({ navigation, route }) {
+  const { query } = route.params || {};
+  const { searchRecipes } = useApp();
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      if (!query) {
+        console.log('No query provided');
+        setLoading(false);
+        return;
+      }
+      console.log('Searching for:', query);
+      setLoading(true);
+      const data = await searchRecipes(query);
+      console.log('Results:', JSON.stringify(data));
+      setRecipes(data || []);
+      setLoading(false);
+    };
+    fetchRecipes();
+  }, [query]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
@@ -28,15 +56,25 @@ export default function ScanResultsScreen({ navigation }) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Select Recipe</Text>
-        <FlatList
-          data={RECIPES}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <RecipeRow item={item} onPress={() => navigation.navigate('SelectedRecipe', { recipe: item })} />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}
-        />
+
+        {loading ? (
+          <ActivityIndicator size="large" color={COLORS.heading} style={{ marginTop: 40 }} />
+        ) : recipes.length === 0 ? (
+          <Text style={styles.empty}>No recipes found for "{query}"</Text>
+        ) : (
+          <FlatList
+            data={recipes}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <RecipeRow
+                item={item}
+                onPress={() => navigation.navigate('SelectedRecipe', { recipeId: item.id, recipeTitle: item.title })}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.list}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -67,4 +105,5 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '700', color: COLORS.white, marginBottom: 5 },
   meta: { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
   arrow: { fontSize: 24, color: COLORS.white, opacity: 0.5 },
+  empty: { textAlign: 'center', color: COLORS.heading, marginTop: 40, fontSize: 16 },
 });
