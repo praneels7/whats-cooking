@@ -5,6 +5,8 @@ export const colors = {
   white: '#FFFFFF',
   textMuted: '#A3A3A3',
   textDark: '#1A1A1A',
+  heading: '#3D2914',
+  dark: '#1A1A1A',
   datePillInactive: 'rgba(26, 26, 26, 0.45)',
   track: '#333333',
   ringTrack: '#2A2A2A',

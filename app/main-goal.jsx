@@ -41,7 +41,13 @@ export default function MainGoal() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/height-weight')} hitSlop={12} style={styles.backBtn}>
+        <Pressable onPress={() => {
+          if (isResetting) {
+            router.replace('/settings');
+          } else {
+            router.canGoBack() ? router.back() : router.replace('/height-weight');
+          }
+        }} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#3D2914" />
         </Pressable>
         <Text style={styles.title}>Main Goal</Text>
@@ -49,7 +55,7 @@ export default function MainGoal() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.subtitle}>What's your main goal right now?</Text>
+        <Text style={styles.subtitle}>What&apos;s your main goal right now?</Text>
 
         <View style={styles.goalsContainer}>
           {GOALS.map((goal) => {
@@ -75,25 +81,45 @@ export default function MainGoal() {
 
         <View style={styles.toggleOutline}>
           <View style={styles.toggleInner}>
-            <Pressable style={[styles.segment, speedUnit === 'Weeks' && styles.segmentActive]} onPress={() => { setSpeedUnit('Weeks'); setSpeedValue(20); }}>
+            <Pressable 
+              style={[styles.segment, speedUnit === 'Weeks' && styles.segmentActive]} 
+              onPress={() => { 
+                if (speedUnit !== 'Weeks') {
+                  setSpeedUnit('Weeks'); 
+                  setSpeedValue(Math.round(speedValue * 4.3333)); 
+                }
+              }}
+            >
               <Text style={styles.segmentText}>Weeks</Text>
             </Pressable>
-            <Pressable style={[styles.segment, speedUnit === 'Months' && styles.segmentActive]} onPress={() => { setSpeedUnit('Months'); setSpeedValue(6); }}>
+            <Pressable 
+              style={[styles.segment, speedUnit === 'Months' && styles.segmentActive]} 
+              onPress={() => { 
+                if (speedUnit !== 'Months') {
+                  setSpeedUnit('Months'); 
+                  setSpeedValue(Math.round(speedValue / 4.3333)); 
+                }
+              }}
+            >
               <Text style={styles.segmentText}>Months</Text>
             </Pressable>
           </View>
         </View>
 
         <View style={styles.sliderSection}>
+          <Text style={styles.currentValueLabel}>
+            {Math.round(speedValue)} {Math.round(speedValue) === 1 && speedUnit === 'Months' ? 'Month' : Math.round(speedValue) === 1 && speedUnit === 'Weeks' ? 'Week' : speedUnit}
+          </Text>
+
           <View style={styles.iconRow}>
-            <MaterialCommunityIcons name="snail" size={28} color="white" />
             <MaterialCommunityIcons name="rabbit" size={28} color="white" />
+            <MaterialCommunityIcons name="snail" size={28} color="white" />
           </View>
 
           <Slider
             style={styles.slider}
-            minimumValue={speedUnit === 'Weeks' ? 10 : 1}
-            maximumValue={speedUnit === 'Weeks' ? 30 : 12}
+            minimumValue={0}
+            maximumValue={speedUnit === 'Weeks' ? 52 : 12}
             step={1}
             value={speedValue}
             onValueChange={setSpeedValue}
@@ -103,9 +129,21 @@ export default function MainGoal() {
           />
 
           <View style={styles.labelsRow}>
-            <Text style={styles.sliderLabel}>{speedUnit === 'Weeks' ? '10' : '1'}</Text>
-            <Text style={styles.sliderLabel}>{speedUnit === 'Weeks' ? '20' : '6'}</Text>
-            <Text style={styles.sliderLabel}>{speedUnit === 'Weeks' ? '30' : '12'}</Text>
+            <Text style={[styles.sliderLabel, { textAlign: 'left', width: 40 }]}>
+              0
+            </Text>
+            
+            <Text style={[
+              styles.sliderLabel, 
+              styles.middleLabel,
+              { left: '50%' }
+            ]}>
+              {speedUnit === 'Weeks' ? '26' : '6'}
+            </Text>
+
+            <Text style={[styles.sliderLabel, { textAlign: 'right', width: 40 }]}>
+              {speedUnit === 'Weeks' ? '52' : '12'}
+            </Text>
           </View>
         </View>
 
@@ -174,12 +212,13 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: 'transparent',
     position: 'relative',
   },
   goalCardSelected: {
     borderColor: '#E8930A',
+    borderWidth: 3,
   },
   goalText: {
     color: '#ffffff',
@@ -231,10 +270,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     marginBottom: 20,
   },
+  currentValueLabel: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#E8930A',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   iconRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 15,
     marginBottom: -10, 
   },
   slider: {
@@ -244,12 +290,21 @@ const styles = StyleSheet.create({
   labelsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 15,
+    position: 'relative',
+    height: 20,
+    alignItems: 'center',
   },
   sliderLabel: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  middleLabel: {
+    position: 'absolute',
+    textAlign: 'center',
+    width: 60,
+    marginLeft: -30, // Offset half width to center on the 'left' percentage
   },
   footer: {
     paddingHorizontal: 30,

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors as COLORS } from '../src/constants/colors';
 import { ChefHat, Utensils } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -24,12 +25,8 @@ export default function Login() {
         }
       }
 
-      // 2. Fall back to hardcoded mock
-      if (email.trim().toLowerCase() === 'test@example.com' && password === 'password123') {
-        router.replace('/dashboard');
-      } else {
-        setError('Incorrect email/password');
-      }
+      // 2. Fall back check removed - users must create an account via Signup
+      setError('Incorrect email/password or account not found');
     } catch (e) {
       setError('Login error. Please try again.');
     }
@@ -43,7 +40,7 @@ export default function Login() {
       <View style={styles.logoSection}>
         <View style={styles.logoCircle}>
           <ChefHat size={40} color="#4a2916" strokeWidth={2} style={styles.chefIcon} />
-          <Text style={styles.logoText}>What's</Text>
+          <Text style={styles.logoText}>What&apos;s</Text>
           <Text style={styles.logoText}>Cooking</Text>
           <Utensils size={24} color="#4a2916" style={styles.utensilsIcon} />
         </View>
@@ -55,7 +52,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="EMAIL"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -65,7 +62,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="PASSWORD"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -77,7 +74,7 @@ export default function Login() {
       </View>
 
       <View style={styles.switchAuthMode}>
-        <Text style={styles.switchText}>Don't have an account?</Text>
+        <Text style={styles.switchText}>Don&apos;t have an account?</Text>
         <TouchableOpacity onPress={() => router.push('/signup')}>
           <Text style={styles.linkBtn}>Create an Account</Text>
         </TouchableOpacity>
@@ -90,7 +87,7 @@ export default function Login() {
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5C87A',
+    backgroundColor: COLORS.background,
     alignItems: 'center',
     paddingTop: 80,
     paddingHorizontal: 24,
@@ -107,7 +104,7 @@ export const styles = StyleSheet.create({
     borderRadius: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1A1A1A',
+    shadowColor: COLORS.card,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -136,11 +133,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     fontSize: 16,
     color: '#3b2a47',
-    backgroundColor: '#E8930A',
-    borderColor: '#433a5b',
+    backgroundColor: COLORS.white,
+    borderColor: 'rgba(0,0,0,0.12)',
     borderWidth: 1,
     borderRadius: 50,
-    shadowColor: '#1A1A1A',
+    shadowColor: COLORS.card,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
@@ -148,21 +145,22 @@ export const styles = StyleSheet.create({
   },
   createAccountBtn: {
     marginTop: 10,
-    width: '100%',
-    paddingVertical: 18,
+    width: '80%',
+    alignSelf: 'center',
+    paddingVertical: 15,
     backgroundColor: '#e08b1a',
     borderColor: '#433a5b',
     borderWidth: 1,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#1A1A1A',
+    shadowColor: COLORS.card,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 4,
   },
   btnText: {
-    color: '#ffffff',
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -185,7 +183,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchText: {
-    color: '#3b2a47',
+    color: COLORS.textDark,
     fontSize: 15,
     marginBottom: 8,
   },

@@ -8,6 +8,7 @@ export default function OptionCard({ label, selected, onPress }) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
+        selected && styles.cardSelected,
         pressed && styles.cardPressed,
       ]}
     >
@@ -30,11 +31,16 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     justifyContent: 'center',
     minHeight: 56,
+    borderWidth: 3,
+    borderColor: 'transparent',
     shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 3,
+  },
+  cardSelected: {
+    borderColor: colors.accent,
   },
   cardPressed: {
     opacity: 0.92,

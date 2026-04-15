@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform
 import { useRouter } from 'expo-router';
 import { ChefHat, Utensils } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors as COLORS } from '../src/constants/colors';
 import { styles } from './login';
 
 export default function Signup() {
@@ -35,7 +36,7 @@ export default function Signup() {
       <View style={[styles.logoSection, { marginBottom: 40 }]}>
         <View style={styles.logoCircle}>
           <ChefHat size={40} color="#4a2916" strokeWidth={2} style={styles.chefIcon} />
-          <Text style={styles.logoText}>What's</Text>
+          <Text style={styles.logoText}>What&apos;s</Text>
           <Text style={styles.logoText}>Cooking</Text>
           <Utensils size={24} color="#4a2916" style={styles.utensilsIcon} />
         </View>
@@ -45,7 +46,7 @@ export default function Signup() {
         <TextInput
           style={styles.input}
           placeholder="USERNAME"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -54,7 +55,7 @@ export default function Signup() {
         <TextInput
           style={styles.input}
           placeholder="EMAIL"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -64,7 +65,7 @@ export default function Signup() {
         <TextInput
           style={styles.input}
           placeholder="PASSWORD"
-          placeholderTextColor="#6d4b2e"
+          placeholderTextColor="rgba(0,0,0,0.35)"
           value={password}
           onChangeText={setPassword}
           secureTextEntry

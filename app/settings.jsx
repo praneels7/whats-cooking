@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,9 +14,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../src/constants/colors';
-import { USER } from '../src/constants/mockData';
+import { colors as COLORS } from '../src/constants/colors';
 import { useRouter } from 'expo-router';
+
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80';
 
 const MENU_ITEMS = [
   'Change Height/Weight',
@@ -28,9 +30,10 @@ export default function SettingsScreen() {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const [displayUsername, setDisplayUsername] = useState(USER.settingsName);
-  const [username, setUsername] = useState(USER.editUsername);
-  const [email, setEmail] = useState(USER.email);
+  const [displayUsername, setDisplayUsername] = useState('User');
+  const [username, setUsername] = useState('User');
+  const [email, setEmail] = useState('email@example.com');
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPw, setShowNewPw] = useState(false);
@@ -49,6 +52,7 @@ export default function SettingsScreen() {
           if (parsed.email) {
             setEmail(parsed.email);
           }
+          setAvatarUrl(parsed.avatarUrl || DEFAULT_AVATAR);
         }
       } catch (e) {}
     }
@@ -110,7 +114,7 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Pressable onPress={handleBack} hitSlop={12} style={styles.headerSide}>
-          <Ionicons name="arrow-back" size={26} color={colors.textDark} />
+          <Ionicons name="arrow-back" size={26} color={COLORS.textDark} />
         </Pressable>
         <Text style={styles.title}>Settings</Text>
         <View style={[styles.headerSide, styles.headerSideEnd]}>
@@ -128,10 +132,16 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.avatarBlock}>
-          <View style={styles.avatarCircle}>
-            <Ionicons name="person" size={48} color={colors.white} />
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarCircle}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
+              ) : (
+                <Ionicons name="person" size={48} color={COLORS.white} />
+              )}
+            </View>
             <View style={styles.camBadge}>
-              <Ionicons name="camera" size={16} color={colors.white} />
+              <Ionicons name="camera" size={16} color={COLORS.white} />
             </View>
           </View>
           {!isEditing ? (
@@ -156,7 +166,7 @@ export default function SettingsScreen() {
                 <Ionicons
                   name="chevron-forward"
                   size={20}
-                  color={colors.textMuted}
+                  color={COLORS.textMuted}
                 />
               </Pressable>
             ))}
@@ -166,8 +176,8 @@ export default function SettingsScreen() {
               <Switch
                 value={notificationsOn}
                 onValueChange={setNotificationsOn}
-                trackColor={{ false: '#555', true: colors.accent }}
-                thumbColor={colors.white}
+                trackColor={{ false: '#555', true: '#FFFFFF' }}
+                thumbColor={notificationsOn ? COLORS.accent : COLORS.white}
                 ios_backgroundColor="#444"
               />
             </View>
@@ -233,7 +243,7 @@ export default function SettingsScreen() {
                 value={username}
                 onChangeText={setUsername}
                 placeholder="Username"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={COLORS.textMuted}
                 style={styles.input}
               />
             </View>
@@ -242,7 +252,7 @@ export default function SettingsScreen() {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Email"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={COLORS.textMuted}
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -253,7 +263,7 @@ export default function SettingsScreen() {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder="New password"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={COLORS.textMuted}
                 style={styles.input}
                 secureTextEntry={!showNewPw}
               />
@@ -265,7 +275,7 @@ export default function SettingsScreen() {
                 <Ionicons
                   name={showNewPw ? 'eye-off-outline' : 'eye-outline'}
                   size={22}
-                  color={colors.white}
+                  color={COLORS.white}
                 />
               </Pressable>
             </View>
@@ -274,7 +284,7 @@ export default function SettingsScreen() {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm password"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={COLORS.textMuted}
                 style={styles.input}
                 secureTextEntry={!showConfirmPw}
               />
@@ -286,7 +296,7 @@ export default function SettingsScreen() {
                 <Ionicons
                   name={showConfirmPw ? 'eye-off-outline' : 'eye-outline'}
                   size={22}
-                  color={colors.white}
+                  color={COLORS.white}
                 />
               </Pressable>
             </View>
@@ -311,7 +321,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -333,10 +343,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '700',
-    color: colors.textDark,
+    color: COLORS.textDark,
   },
   editLink: {
-    color: colors.accent,
+    color: COLORS.accent,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -348,46 +358,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  avatarWrapper: {
+    width: 112,
+    height: 112,
+  },
   avatarCircle: {
     width: 112,
     height: 112,
     borderRadius: 56,
-    backgroundColor: colors.avatarPlaceholder,
+    backgroundColor: COLORS.avatarPlaceholder,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
   },
   camBadge: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
+    bottom: 0,
+    right: 0,
     width: 32,
     height: 32,
+    zIndex: 10,
+    elevation: 10,
     borderRadius: 16,
-    backgroundColor: colors.accent,
+    backgroundColor: COLORS.accent,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.background,
+    borderColor: COLORS.background,
   },
   profileName: {
     marginTop: 14,
     fontSize: 20,
     fontWeight: '800',
-    color: colors.textDark,
+    color: COLORS.textDark,
   },
   profileNameSmall: {
     marginTop: 10,
     fontSize: 16,
     fontWeight: '600',
-    color: colors.textDark,
+    color: COLORS.textDark,
     opacity: 0.85,
   },
   menuCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.card,
-    borderRadius: colors.radiusMd,
+    backgroundColor: COLORS.card,
+    borderRadius: COLORS.radiusMd,
     paddingVertical: 18,
     paddingHorizontal: 18,
     marginBottom: 12,
@@ -396,7 +418,7 @@ const styles = StyleSheet.create({
     opacity: 0.92,
   },
   menuText: {
-    color: colors.white,
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -404,32 +426,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.card,
-    borderRadius: colors.radiusMd,
+    backgroundColor: COLORS.card,
+    borderRadius: COLORS.radiusMd,
     paddingVertical: 14,
     paddingHorizontal: 18,
     marginBottom: 20,
   },
   resetBtn: {
-    backgroundColor: colors.white,
-    borderRadius: colors.radiusMd,
+    backgroundColor: COLORS.white,
+    borderRadius: COLORS.radiusMd,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.textDark,
+    borderColor: COLORS.textDark,
   },
   resetPressed: {
     opacity: 0.9,
   },
   resetText: {
-    color: colors.textDark,
+    color: COLORS.textDark,
     fontSize: 16,
     fontWeight: '700',
   },
   amberBtn: {
-    backgroundColor: colors.accent,
-    borderRadius: colors.radiusMd,
+    backgroundColor: COLORS.accent,
+    borderRadius: COLORS.radiusMd,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 12,
@@ -438,13 +460,13 @@ const styles = StyleSheet.create({
     opacity: 0.92,
   },
   amberBtnText: {
-    color: colors.white,
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '800',
   },
   field: {
-    backgroundColor: colors.card,
-    borderRadius: colors.radiusMd,
+    backgroundColor: COLORS.card,
+    borderRadius: COLORS.radiusMd,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -452,7 +474,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: colors.white,
+    color: COLORS.white,
     fontSize: 16,
     paddingVertical: 16,
     paddingHorizontal: 18,

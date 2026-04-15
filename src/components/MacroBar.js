@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 
-export default function MacroBar({ label, current, target }) {
+export default function MacroBar({ label, current, target, labelColor }) {
   const filled = Math.max(current, 0.0001);
   const empty = Math.max(target - current, 0);
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>
+      <Text style={[styles.label, labelColor ? { color: labelColor } : null]}>
         {label} - {current}/{target}g
       </Text>
       <View style={styles.track}>

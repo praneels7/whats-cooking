@@ -1,10 +1,11 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React from 'react';
+import { apiClient } from '../src/services/apiClient';
+import { useApi } from '../src/hooks/useApi';
 import {
-  View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Image
+  View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Image, ActivityIndicator
 } from 'react-native';
 import { colors as COLORS } from '../src/constants/colors';
-import { RECIPES } from '../src/data/mockData';
 
 function RecipeRow({ item, onPress }) {
   return (
@@ -18,7 +19,7 @@ function RecipeRow({ item, onPress }) {
       )}
       <View style={styles.info}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.meta}>{item.calories} cal &nbsp;&nbsp; {item.weight} Protein.</Text>
+        <Text style={styles.meta}>{item.calories} cal  ·  {item.weight}  ·  {item.protein}g protein</Text>
       </View>
       <Text style={styles.arrow}>›</Text>
     </TouchableOpacity>
@@ -28,11 +29,65 @@ function RecipeRow({ item, onPress }) {
 export default function ScanResultsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const query = params.query || '';
 
-  const query = params.query ? params.query.toLowerCase() : '';
-  const filteredRecipes = query
-    ? RECIPES.filter(r => r.name.toLowerCase().includes(query) || (r.ingredients && r.ingredients.toLowerCase().includes(query)))
-    : RECIPES;
+  const {
+    data: filteredRecipes,
+    loading,
+    error,
+    execute: fetchRecipes
+  } = useApi(async (q) => {
+    const response = await apiClient.get('/mock/recipes');
+    if (!response.success) return response;
+
+    const allRecipes = response.data;
+    const results = q
+      ? allRecipes.filter(r => r.name.toLowerCase().includes(q.toLowerCase()) || (r.ingredients && r.ingredients.toLowerCase().includes(q.toLowerCase())))
+      : allRecipes;
+    
+    return { success: true, data: results };
+  });
+
+  React.useEffect(() => {
+    fetchRecipes(query);
+  }, [query]);
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.accent || '#E8930A'} />
+          <Text style={styles.loadingText}>Fetching delicious recipes...</Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>Oops! {error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => fetchRecipes(query)}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={filteredRecipes || []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <RecipeRow item={item} onPress={() => router.push({ pathname: '/selected-recipe', params: { id: item.id } })} />
+        )}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>{`No recipes found for "${query}"`}</Text>
+        }
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -41,15 +96,7 @@ export default function ScanResultsScreen() {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Select Recipe</Text>
-        <FlatList
-          data={filteredRecipes}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <RecipeRow item={item} onPress={() => router.push({ pathname: '/selected-recipe', params: { id: item.id } })} />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}
-        />
+        {renderContent()}
       </View>
     </SafeAreaView>
   );
@@ -80,4 +127,15 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '700', color: COLORS.white, marginBottom: 5 },
   meta: { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
   arrow: { fontSize: 24, color: COLORS.white, opacity: 0.5 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
+  loadingText: { marginTop: 16, fontSize: 16, color: COLORS.heading, opacity: 0.8 },
+  errorText: { fontSize: 16, color: '#D32F2F', textAlign: 'center', marginBottom: 20 },
+  retryBtn: { 
+    backgroundColor: COLORS.accent, 
+    paddingHorizontal: 24, 
+    paddingVertical: 12, 
+    borderRadius: 8 
+  },
+  retryText: { color: COLORS.white, fontWeight: '700' },
+  emptyText: { textAlign: 'center', marginTop: 40, fontSize: 16, color: COLORS.heading, opacity: 0.6 },
 });

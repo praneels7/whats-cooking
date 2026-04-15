@@ -11,7 +11,9 @@ export default function FoodLogItem({ name, calories, imageUri, onPress, onDelet
       {imageUri ? (
         <Image source={{ uri: imageUri }} style={styles.thumb} />
       ) : (
-        <View style={styles.thumb} />
+        <View style={[styles.thumb, styles.thumbPlaceholder]}>
+          <Text style={styles.thumbEmoji}>🍽️</Text>
+        </View>
       )}
       <View style={styles.textCol}>
         <Text style={styles.title}>{name}</Text>
@@ -51,6 +53,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 14,
     backgroundColor: colors.track,
+  },
+  thumbPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbEmoji: {
+    fontSize: 28,
   },
   textCol: {
     flex: 1,

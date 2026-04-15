@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, Image
 } from 'react-native';
-import { colors } from '../src/constants/colors';
+import { colors as COLORS } from '../src/constants/colors';
 import MacroBar from '../src/components/MacroBar';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,11 +14,10 @@ export default function LogItScreen() {
   const name = params?.name || 'Grilled Chicken';
   const baseCalories = parseInt(params?.calories) || 350;
   const imageUri = params?.imageUri || null;
-  
-  // Create mock macros since dashboard FOOD_LOG doesn't manually map them
-  const baseProtein = 40;
-  const baseCarbs = 0;
-  const baseFats = 8;
+
+  const baseProtein = parseInt(params?.protein) || 30;
+  const baseCarbs = parseInt(params?.carbs) || 20;
+  const baseFats = parseInt(params?.fats) || 8;
   const proteinGoal = 120;
   const carbsGoal = 150;
   const fatsGoal = 50;
@@ -26,7 +25,7 @@ export default function LogItScreen() {
   const [grams, setGrams] = useState(200);
 
   const scaleFactor = grams / 100;
-  const scaledCal = Math.round((baseCalories / 2) * scaleFactor);
+  const scaledCal = Math.round(baseCalories * scaleFactor);
   const scaledProtein = Math.round(baseProtein * scaleFactor);
   const scaledCarbs = Math.round(baseCarbs * scaleFactor);
   const scaledFats = Math.round(baseFats * scaleFactor);
@@ -39,7 +38,11 @@ export default function LogItScreen() {
         id: Date.now().toString(),
         name,
         calories: scaledCal,
-        image: imageUri,
+        protein: scaledProtein,
+        carbs: scaledCarbs,
+        fats: scaledFats,
+        grams,
+        image: imageUri || null,
         date: new Date().toISOString().slice(0, 10),
       });
       await AsyncStorage.setItem('mockFoodLog', JSON.stringify(logArray));
@@ -100,12 +103,12 @@ export default function LogItScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: COLORS.background },
   container: { paddingHorizontal: 24, paddingBottom: 40, paddingTop: 10 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   backBtn: { width: 40, alignItems: 'flex-start' },
-  back: { fontSize: 26, color: colors.textDark, fontWeight: '300' },
-  title: { fontSize: 22, fontWeight: '800', color: colors.textDark },
+  back: { fontSize: 26, color: COLORS.textDark, fontWeight: '300' },
+  title: { fontSize: 22, fontWeight: '800', color: COLORS.textDark },
   hero: {
     width: '100%', height: 220, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center', marginBottom: 20,
@@ -114,24 +117,24 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20,
   },
-  itemName: { fontSize: 22, fontWeight: '800', color: colors.textDark },
-  itemCal: { fontSize: 15, color: colors.textMuted },
+  itemName: { fontSize: 22, fontWeight: '800', color: COLORS.textDark },
+  itemCal: { fontSize: 15, color: COLORS.textMuted },
   gramControl: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: colors.card,
+    backgroundColor: COLORS.card,
     borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8,
     shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
   },
   gramBtn: { width: 24, alignItems: 'center' },
-  gramBtnText: { fontSize: 22, fontWeight: '700', color: colors.white },
-  gramValue: { fontSize: 16, fontWeight: '600', color: colors.white, minWidth: 50, textAlign: 'center' },
-  macros: { marginBottom: 30, backgroundColor: colors.card, padding: 20, borderRadius: 16 },
+  gramBtnText: { fontSize: 22, fontWeight: '700', color: COLORS.white },
+  gramValue: { fontSize: 16, fontWeight: '600', color: COLORS.white, minWidth: 50, textAlign: 'center' },
+  macros: { marginBottom: 30, backgroundColor: COLORS.card, padding: 20, borderRadius: 16 },
   addBtn: {
-    backgroundColor: colors.accent,
+    backgroundColor: COLORS.accent,
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
     shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
   },
-  addBtnText: { color: colors.white, fontSize: 18, fontWeight: '800' },
+  addBtnText: { color: COLORS.white, fontSize: 18, fontWeight: '800' },
 });

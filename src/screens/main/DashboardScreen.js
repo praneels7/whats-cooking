@@ -88,8 +88,8 @@ export default function DashboardScreen({ navigation }) {
         <View style={styles.streakCard}>
           <Text style={styles.streakIcon}>🔥</Text>
           <View style={styles.streakText}>
-            <Text style={styles.streakTitle}>Don't Let The Momentum Of Streak</Text>
-            <Text style={styles.streakSub}>Keep it going – you're building momentum!</Text>
+            <Text style={styles.streakTitle}>Don&apos;t Let The Momentum Of Streak</Text>
+            <Text style={styles.streakSub}>Keep it going &ndash; you&apos;re building momentum!</Text>
           </View>
         </View>
 
